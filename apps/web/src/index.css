@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 6%;
+    --muted: 220 14% 93%;
+    --muted-foreground: 220 9% 40%;
+    --border: 220 13% 88%;
+    --glass-border: rgba(15, 23, 42, 0.1);
+    --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.45));
+    --radius: 1.25rem;
+  }
+  .dark {
+    --background: 230 55% 6%;
+    --foreground: 210 40% 96%;
+    --card: 231 45% 10%;
+    --card-foreground: 210 40% 96%;
+    --primary: 172 89% 51%;
+    --primary-foreground: 230 55% 6%;
+    --muted: 231 35% 16%;
+    --muted-foreground: 215 20% 72%;
+    --border: 231 30% 20%;
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-bg: linear-gradient(135deg, rgba(20, 30, 60, 0.72), rgba(10, 15, 35, 0.55));
+  }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Plus Jakarta Sans', Inter, 'Hind Siliguri', system-ui, sans-serif;
+  }
+  :focus-visible {
+    outline: 3px solid #3b82f6;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply rounded-2xl border shadow-glass backdrop-blur-glass;
+    border-color: var(--glass-border);
+    background: var(--glass-bg);
+  }
+  .glass-strong {
+    @apply glass shadow-glow;
+    border-width: 1.5px;
+  }
+  .glow {
+    @apply shadow-glow;
+  }
+  .glow-strong {
+    @apply shadow-glow-strong;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(90deg, #14f1d9, #3b82f6, #8b5cf6);
+  }
+  .mesh-hero {
+    background:
+      radial-gradient(600px 400px at 10% 20%, rgba(20, 241, 217, 0.25), transparent),
+      radial-gradient(700px 500px at 80% 10%, rgba(59, 130, 246, 0.3), transparent),
+      radial-gradient(600px 500px at 50% 90%, rgba(139, 92, 246, 0.28), transparent);
+  }
+  .grain {
+    position: relative;
+    isolation: isolate;
+  }
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  }
+  .btn-gradient {
+    background-image: linear-gradient(90deg, #14f1d9, #3b82f6, #8b5cf6);
+    @apply font-bold text-[#070B1A];
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

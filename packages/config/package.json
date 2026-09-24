@@ -1,0 +1,12 @@
+{
+  "name": "@medinova/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./eslint": "./eslint.js"
+  },
+  "devDependencies": {
+    "eslint": "^9.9.0"
+  }
+}

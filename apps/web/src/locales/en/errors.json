@@ -1,0 +1,23 @@
+{
+  "invalidQuery": "Invalid request",
+  "validation": "Please check your input",
+  "internal": "Server error",
+  "notFound": "Page not found",
+  "backHome": "Back to home",
+  "invalidParams": "Invalid request",
+  "slotTaken": "That time slot was just booked. Please pick another.",
+  "doctorBranchNotFound": "This doctor does not practice at the selected branch",
+  "telemedicineDisabled": "Telemedicine is not available for this doctor",
+  "upstream": "Booking service unavailable",
+  "unavailable": "Service unavailable. Please try again.",
+  "authInvalidCredentials": "Email or password is incorrect",
+  "authUserExists": "An account with this email already exists",
+  "authWeakPassword": "Password must be at least 8 characters",
+  "authEmailUnconfirmed": "Please confirm your email first",
+  "authRateLimited": "Too many attempts. Please wait and try again.",
+  "authOtpExpired": "That code is invalid or expired",
+  "authSessionExpired": "Your session expired. Please sign in again.",
+  "authNotConfigured": "Supabase auth is not configured (missing environment variables)",
+  "authNetwork": "Network error. Please check your connection.",
+  "authGeneric": "Sign-in failed. Please try again."
+}

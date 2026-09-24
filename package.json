@@ -1,0 +1,36 @@
+{
+  "name": "medinova",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MediNova — futuristic multi-branch hospital & clinic platform (Allopathic + Homeopathic), BDT, EN+BN, Asia/Dhaka. PWA.",
+  "packageManager": "pnpm@9.4.0",
+  "engines": {
+    "node": ">=20 <21"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:web": "pnpm --filter @medinova/web dev",
+    "dev:api": "pnpm --filter @medinova/api dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "check:sql": "node scripts/check-sql.mjs",
+    "test:db": "node scripts/db-verify.mjs",
+    "test:rls": "node scripts/rls-test.mjs",
+    "test:db:all": "node scripts/db-verify.mjs && node scripts/rls-test.mjs"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "embedded-postgres": "18.4.0-beta.17",
+    "pg": "^8.23.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}

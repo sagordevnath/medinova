@@ -1,0 +1,13 @@
+{
+  "title": "Book appointment",
+  "branch": "Branch",
+  "doctor": "Doctor",
+  "visitType": "Visit type",
+  "date": "Date & time",
+  "submit": "Confirm booking",
+  "success": "Appointment request received!",
+  "stepBranch": "Branch",
+  "stepDoctor": "Doctor",
+  "stepTime": "Time",
+  "stepConfirm": "Confirm"
+}

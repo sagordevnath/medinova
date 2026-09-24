@@ -1,0 +1,23 @@
+{
+  "appName": "MediNova",
+  "tagline": "Future of Care, Today",
+  "description": "Multi-branch hospital: allopathic + homeopathic care with online booking.",
+  "loading": "Loading…",
+  "retry": "Retry",
+  "error": "Something went wrong. Please retry.",
+  "empty": "Nothing here yet.",
+  "emergency": "Emergency",
+  "callNow": "Call now",
+  "hotline": "Hotline: 16263",
+  "skipToContent": "Skip to content",
+  "bdt": "৳{{amount}}",
+  "light": "Light",
+  "dark": "Dark",
+  "system": "System",
+  "toggleTheme": "Toggle theme",
+  "toggleLanguage": "Toggle language",
+  "close": "Close",
+  "viewAll": "View all",
+  "offlineTitle": "You are offline",
+  "offlineBody": "Please check your connection. Bookings already made are safe."
+}

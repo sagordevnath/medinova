@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+.vite/
+*.local
+.env
+.env.*
+!.env.example
+supabase/.branches/
+supabase/.temp/

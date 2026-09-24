@@ -1,0 +1,5 @@
+export interface Branch { id:string; slug:string; name:string; nameBn:string; city:string; address:string; addressBn:string; lat:number; lng:number; phone:string; emergencyPhone?:string; openingHours?:Record<string,string>; facilities?:string[] }
+export interface Department { id:string; name:string; nameBn:string; medicineType:'allopathic'|'homeopathic'; icon?:string|null; description?:string|null }
+export interface Fee { branchId:string; consultationFee:number; followupFee:number; followupValidDays?:number; roomNo?:string|null; telemedicineFee?:number|null }
+export interface Doctor { id:string; medicineType:'allopathic'|'homeopathic'; fullName:string; fullNameBn:string; slug:string; bio?:string|null; qualifications?:string[]; departmentId?:string|null; specialties?:string[]; experienceYears?:number; ratingAvg?:number; ratingCount?:number; languages?:string[]; photoUrl?:string|null; registrationNo?:string|null; telemedicineEnabled?:boolean; fees:Fee[] }
+export interface CatalogResponse<T> { data:T[] }
