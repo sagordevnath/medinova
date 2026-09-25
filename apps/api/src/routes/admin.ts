@@ -20,6 +20,7 @@ const slugify = (s: string): string =>
 
 /** Create doctor + auth user (invite) and optional branch posting. */
 const createDoctorBody = doctorSchema.extend({
+  branchAssignments: z.array(z.object({ branchId: z.string().uuid(), consultationFee: z.number().min(0).max(100000), followupFee: z.number().min(0).max(100000), roomNo: z.string().max(20).optional(), schedules: z.array(z.object({ weekday: z.number().int().min(0).max(6), startTime: z.string(), endTime: z.string(), slotMinutes: z.number().int().min(1).max(480) })).default([]) })).default([]),
   email: z.string().email(),
   /** Optional login password; when omitted a magic-link invite is sent. */
   password: z.string().min(8).max(72).optional(),
@@ -117,14 +118,11 @@ export function adminRouter(env: Env, logger: Logger): Router {
         throw ApiError.upstream('errors.upstream', docErr?.message);
       }
 
-      if (body.branchId) {
-        const { error: postErr } = await admin.from('doctor_branches').insert({
-          doctor_id: doctor.id,
-          branch_id: body.branchId,
-          consultation_fee: body.consultationFee ?? 1000,
-          followup_fee: body.followupFee ?? Math.round((body.consultationFee ?? 1000) * 0.6),
-        });
-        if (postErr) logger.warn({ err: postErr.message }, 'doctor posting insert failed');
+      const assignments = body.branchAssignments.length > 0 ? body.branchAssignments : body.branchId ? [{ branchId: body.branchId, consultationFee: body.consultationFee ?? 1000, followupFee: body.followupFee ?? Math.round((body.consultationFee ?? 1000) * 0.6), schedules: [] }] : [];
+      for (const assignment of assignments) {
+        const { data: posting, error: postErr } = await admin.from('doctor_branches').insert({ doctor_id: doctor.id, branch_id: assignment.branchId, consultation_fee: assignment.consultationFee, followup_fee: assignment.followupFee, room_no: assignment.roomNo ?? null }).select('id').single();
+        if (postErr) throw new ApiError(502, 'errors.upstream', postErr.message);
+        if (assignment.schedules.length) await admin.from('doctor_schedules').insert(assignment.schedules.map((s) => ({ doctor_branch_id: posting.id, weekday: s.weekday, start_time: s.startTime, end_time: s.endTime, slot_minutes: s.slotMinutes, max_per_slot: 1, is_active: true })));
       }
       logger.info({ doctorId: doctor.id, userId, actor: req.auth!.userId }, 'doctor created');
       res.status(201).json({ data: { doctorId: doctor.id, userId, slug } });

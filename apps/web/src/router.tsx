@@ -18,6 +18,8 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })));
 const DashboardsPage = lazy(() => import('./pages/DashboardsPage').then((m) => ({ default: m.DashboardsPage })));
 const DoctorWorkspacePage = lazy(() => import('./pages/DoctorWorkspacePage').then((m) => ({ default: m.DoctorWorkspacePage })));
+const StaffWorkspacePage = lazy(() => import('./pages/StaffWorkspacePage').then((m) => ({ default: m.StaffWorkspacePage })));
+const AdminWorkspacePage = lazy(() => import('./pages/AdminWorkspacePage').then((m) => ({ default: m.AdminWorkspacePage })));
 
 function fallback() {
   return (
@@ -49,9 +51,10 @@ const routes: RouteObject[] = [
       { path: 'reset-password', element: <Suspense fallback={fallback()}><ResetPasswordPage /></Suspense> },
       { path: 'account', element: <ProtectedRoute roles={['patient']}><Suspense fallback={fallback()}><DashboardsPage /></Suspense></ProtectedRoute> },
       { path: 'doctor', element: <ProtectedRoute roles={['doctor']}><Suspense fallback={fallback()}><DoctorWorkspacePage /></Suspense></ProtectedRoute> },
-      { path: 'reception', element: <ProtectedRoute roles={['receptionist']}><Suspense fallback={fallback()}><DashboardsPage /></Suspense></ProtectedRoute> },
-      { path: 'branch-admin', element: <ProtectedRoute roles={['branch_admin']}><Suspense fallback={fallback()}><DashboardsPage /></Suspense></ProtectedRoute> },
-      { path: 'admin', element: <ProtectedRoute roles={['super_admin']}><Suspense fallback={fallback()}><DashboardsPage /></Suspense></ProtectedRoute> },
+      { path: 'reception', element: <ProtectedRoute roles={['receptionist']}><Suspense fallback={fallback()}><StaffWorkspacePage mode="reception" /></Suspense></ProtectedRoute> },
+      { path: 'branch-admin', element: <ProtectedRoute roles={['branch_admin']}><Suspense fallback={fallback()}><StaffWorkspacePage mode="admin" /></Suspense></ProtectedRoute> },
+      { path: 'display/:branchSlug', element: <Suspense fallback={fallback()}><StaffWorkspacePage mode="display" /></Suspense> },
+      { path: 'admin', element: <ProtectedRoute roles={['super_admin']}><Suspense fallback={fallback()}><AdminWorkspacePage /></Suspense></ProtectedRoute> },
       { path: 'design-system', element: <Suspense fallback={fallback()}><DesignSystemPage /></Suspense> },
       { path: 'offline', element: <Suspense fallback={fallback()}><OfflinePage /></Suspense> },
       { path: '*', element: <Suspense fallback={fallback()}><NotFoundPage /></Suspense> },
