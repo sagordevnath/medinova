@@ -76,6 +76,11 @@ const toDepartment = (r: Row) =>
     isActive: r.is_active,
   });
 
+router.get('/settings', async (_req: Request, res: Response<Envelope<unknown>>) => {
+  const row = await tryQuery<{ value: unknown }>(() => getSupabaseAdmin(env).from('site_settings').select('value').eq('key', 'features').maybeSingle());
+  res.json({ data: row?.value ?? {}, meta: { degraded: row === null } });
+});
+
 router.get('/branches', async (_req: Request, res: Response<Envelope<unknown[]>>) => {
   const rows = await tryQuery<Row[]>(() =>
     getSupabaseAdmin(env)
@@ -234,9 +239,23 @@ function bookingError(error: { message: string }): number {
   return 502;
 }
 
+async function verifyTurnstile(env: Env, req: Request): Promise<boolean> {
+  if (!env.TURNSTILE_SECRET_KEY) return true;
+  const token = req.header('x-turnstile-token');
+  if (!token) return false;
+  try {
+    const res = await fetch(env.TURNSTILE_VERIFY_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ secret: env.TURNSTILE_SECRET_KEY, response: token }) });
+    const data = (await res.json()) as { success?: boolean };
+    return data.success === true;
+  } catch {
+    return false;
+  }
+}
+
 router.post(
   '/appointments',
   async (req: Request, res: Response<Envelope<unknown> | { error: string; details?: unknown }>) => {
+    if (!(await verifyTurnstile(env, req))) return res.status(403).json({ error: 'errors.turnstileRequired' });
     const admin = getSupabaseAdmin(env);
 
     // Preferred Module 2 payload: explicit patient + doctor_branch + slot.

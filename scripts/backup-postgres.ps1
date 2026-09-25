@@ -1,0 +1,2 @@
+﻿param([Parameter(Mandatory=$true)][string]$DatabaseUrl,[string]$OutputDir="$PSScriptRoot\..\backups")
+$ErrorActionPreference='Stop'; New-Item -ItemType Directory -Force $OutputDir | Out-Null; $stamp=Get-Date -Format 'yyyyMMdd-HHmmss'; $file=Join-Path $OutputDir "medinova-$stamp.sql"; & pg_dump --format=custom --no-owner --no-privileges --file=$file $DatabaseUrl; Write-Host "Backup written to $file"

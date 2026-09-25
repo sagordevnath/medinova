@@ -55,6 +55,9 @@ const envSchema = z.object({
   PRESCRIPTIONS_BUCKET: z.string().default('prescriptions'),
 
   // Payment adapters (sandbox configs; cash works with none of these).
+  TURNSTILE_SECRET_KEY: z.string().optional(),
+  TURNSTILE_SITE_KEY: z.string().optional(),
+  TURNSTILE_VERIFY_URL: z.string().url().default('https://challenges.cloudflare.com/turnstile/v0/siteverify'),
   PAYMENT_SANDBOX: envBool(true),
   BKASH_SANDBOX_URL: z.string().url().default('https://sandbox.bka.sh/v1.2.0-beta/checkout/pay'),
   BKASH_APP_KEY: z.string().optional(),

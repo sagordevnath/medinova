@@ -89,6 +89,13 @@
   }
 }
 
+.high-contrast {
+  --foreground: 0 0% 0%;
+  --muted-foreground: 0 0% 20%;
+  --border: 0 0% 15%;
+  filter: contrast(1.18);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

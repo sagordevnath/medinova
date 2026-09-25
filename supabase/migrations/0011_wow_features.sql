@@ -1,0 +1,2 @@
+﻿-- Module 13 feature flags and optional wow-layer settings.
+insert into public.site_settings (key, value) values ('features', '{"aiSymptomHelper":true,"smartSlotRecommender":true,"queuePrediction":true,"qrKiosk":true,"telemedicine":true,"medicineReminders":true,"healthTools":true,"voiceInput":true,"smartRouting":true,"visual3d":true,"nightCare":true,"highContrast":true,"fontSize":true,"whatsappShare":true,"blog":true,"equeuePush":true}'::jsonb) on conflict (key) do nothing;

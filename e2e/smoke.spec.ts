@@ -1,0 +1,2 @@
+﻿import { test, expect } from '@playwright/test';
+test.describe('public booking smoke', () => { test('guest can open booking', async ({ page }) => { await page.goto('/book'); await expect(page).toHaveTitle(/MediNova|Book/i); }); test('doctor and reception routes are protected', async ({ page }) => { await page.goto('/doctor'); await expect(page).toHaveURL(/login|doctor/); }); test('branch listing loads', async ({ page }) => { await page.goto('/branches'); await expect(page.getByRole('heading').first()).toBeVisible(); }); });

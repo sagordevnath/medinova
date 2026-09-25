@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Footer, Header, MobileBottomNav, EmergencyFab } from './components/layout';
 import { PageTransition } from './components/PageTransition';
 import { ToastViewport } from './providers/ToastProvider';
+import { WowLayer } from './components/WowLayer';
 
 export function App() {
   const { t } = useTranslation('common');
@@ -21,6 +22,7 @@ export function App() {
       <MobileBottomNav />
       <EmergencyFab />
       <ToastViewport />
+      <WowLayer />
     </div>
   );
 }

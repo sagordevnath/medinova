@@ -39,9 +39,31 @@ export function buildApp(): BuiltApp {
       autoLogging: { ignore: (req) => req.url === '/health' },
     }),
   );
-  app.use(helmet());
-  // CORS: CLIENT_URL only (no wildcard — credentialed requests).
-  app.use(cors({ origin: env.CLIENT_URL, methods: ['GET', 'POST', 'PATCH', 'DELETE'], allowedHeaders: ['Content-Type', 'Authorization'] }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", 'https://challenges.cloudflare.com'],
+          frameSrc: ["'self'", 'https://challenges.cloudflare.com'],
+          connectSrc: ["'self'", env.SUPABASE_URL, 'https://challenges.cloudflare.com'],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+        },
+      },
+      hsts: env.NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
+      referrerPolicy: { policy: 'no-referrer' },
+    }),
+  );
+  app.use(
+    cors({
+      origin: (origin, callback) => callback(null, !origin || origin === env.CLIENT_URL),
+      methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Turnstile-Token'],
+      credentials: false,
+      maxAge: 600,
+    }),
+  );
   app.use(express.json({ limit: '100kb' }));
 
   // OpenAPI docs (no auth — static UI).
