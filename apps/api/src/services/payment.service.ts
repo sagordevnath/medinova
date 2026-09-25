@@ -182,6 +182,9 @@ export async function initPayment(env: Env, logger: Logger, input: InitInput): P
       status: 'unpaid',
     });
     if (error) throw ApiError.upstream('errors.upstream', error.message);
+    if (input.provider === 'cash') {
+      await getSupabaseAdmin(env).from('payments').update({ status: 'pay_at_counter', receipt_number: `RCPT-${Date.now()}` }).eq('appointment_id', input.appointmentId).eq('method', 'cash');
+    }
   }
 
   const result = adapter.init(env, providerRef, target.fee, input);
@@ -199,8 +202,18 @@ export async function initPayment(env: Env, logger: Logger, input: InitInput): P
   return result;
 }
 
-/**
- * POST /payments/webhook — verify provider signature, settle payment, notify.
+export async function refundPayment(env: Env, appointmentId: string, providerRef?: string): Promise<{ id: string; status: string }> {
+  const admin = getSupabaseAdmin(env);
+  const query = admin.from('payments').update({ status: 'refunded' }).eq('appointment_id', appointmentId).in('status', ['paid', 'pay_at_counter']).select('id, status');
+  const { data, error } = providerRef ? await query.eq('provider_ref', providerRef) : await query;
+  if (error) throw ApiError.upstream('errors.upstream', error.message);
+  const row = data?.[0];
+  if (!row) throw ApiError.notFound();
+  await setAppointmentPayment(env, appointmentId, 'refunded', 'refund');
+  return row;
+}
+
+/** POST /payments/webhook — verify provider signature, settle payment, notify.
  * Body must include provider, appointmentId, amount (BDT), plus provider fields.
  */
 export async function handleWebhook(
@@ -221,16 +234,23 @@ export async function handleWebhook(
   }
 
   const appointmentId = String(body.appointmentId ?? '');
-  const payment = await awaitOk<Array<{ id: string; appointment_id: string }>>(
+  const target = await loadPaymentTarget(env, appointmentId);
+  if (Number.isFinite(amount) && Math.abs(amount - target.fee) > 0.009) {
+    logger.warn({ provider, appointmentId, receivedAmount: amount, expectedAmount: target.fee }, 'payment amount mismatch rejected');
+    return { ok: false, reason: 'amount mismatch' };
+  }
+  const payment = await awaitOk<Array<{ id: string; appointment_id: string; status: string }>>(
     getSupabaseAdmin(env)
       .from('payments')
-      .select('id, appointment_id')
+      .select('id, appointment_id, status')
       .eq('appointment_id', appointmentId)
       .eq('method', provider)
       .limit(1),
   );
   const row = payment[0];
   if (!row) return { ok: false, reason: 'payment not found' };
+  if (row.status === 'paid') return { ok: true, providerRef: check.providerRef, appointmentId: row.appointment_id };
+  if (row.status === 'refunded') return { ok: false, reason: 'payment refunded' };
 
   const { error } = await getSupabaseAdmin(env)
     .from('payments')
@@ -245,7 +265,6 @@ export async function handleWebhook(
 
   await setAppointmentPayment(env, row.appointment_id, 'paid', provider);
 
-  const target = await loadPaymentTarget(env, row.appointment_id);
   await notify(env, logger, {
     userId: target.ownerId,
     title: `Payment received for ${target.code}`,

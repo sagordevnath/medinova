@@ -7,7 +7,7 @@ import { validate } from '../middleware/validate.js';
 import { h } from '../utils/async.js';
 import { ApiError } from '../utils/errors.js';
 import type { Logger } from '../utils/logger.js';
-import { handleWebhook, initPayment, type PaymentProvider } from '../services/payment.service.js';
+import { handleWebhook, initPayment, refundPayment, type PaymentProvider } from '../services/payment.service.js';
 import { assertCanAct, loadAppointment } from '../services/appointment.service.js';
 
 const initBody = z.object({
@@ -15,6 +15,8 @@ const initBody = z.object({
   provider: z.enum(['cash', 'bkash', 'nagad', 'sslcommerz']).default('cash'),
   returnUrl: z.string().url().optional(),
 });
+
+const refundBody = z.object({ appointmentId: z.string().uuid(), providerRef: z.string().max(120).optional() });
 
 const webhookBody = z.object({
   provider: z.enum(['bkash', 'nagad', 'sslcommerz']),
@@ -62,6 +64,20 @@ export function paymentsRouter(env: Env, logger: Logger): Router {
         returnUrl: body.returnUrl,
       });
       res.json({ data: result });
+    }),
+  );
+
+  r.post(
+    '/refund',
+    strictLimiter(env),
+    auth,
+    requireAuth,
+    validate({ body: refundBody }),
+    h(async (req: Request, res: Response) => {
+      const body = refundBody.parse(req.body);
+      const appt = await loadAppointment(env, body.appointmentId);
+      assertCanAct(req.auth!, appt, ['staff']);
+      res.json({ data: await refundPayment(env, body.appointmentId, body.providerRef) });
     }),
   );
 

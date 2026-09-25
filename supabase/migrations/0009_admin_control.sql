@@ -1,28 +1,8 @@
--- Module 11 global control settings and CMS content.
-create table if not exists public.site_settings (
-  key text primary key,
-  value jsonb not null default '{}'::jsonb,
-  updated_at timestamptz not null default now()
-);
-create table if not exists public.content_pages (
-  id uuid primary key default gen_random_uuid(),
-  slug text unique not null,
-  kind text not null check (kind in ('faq','health_tip','homepage_banner')),
-  title text not null,
-  title_bn text,
-  body text,
-  body_bn text,
-  metadata jsonb not null default '{}'::jsonb,
-  is_active boolean not null default true,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-alter table public.site_settings enable row level security;
-alter table public.content_pages enable row level security;
-drop policy if exists "settings super all" on public.site_settings;
-create policy "settings super all" on public.site_settings for all using (public.current_role() = 'super_admin') with check (public.current_role() = 'super_admin');
-drop policy if exists "content public active" on public.content_pages;
-create policy "content public active" on public.content_pages for select using (is_active = true);
-drop policy if exists "content super all" on public.content_pages;
-create policy "content super all" on public.content_pages for all using (public.current_role() = 'super_admin') with check (public.current_role() = 'super_admin');
+﻿-- Module 11 global control settings and CMS content.
+create table if not exists public.site_settings (key text primary key, value jsonb not null default '{}'::jsonb, updated_at timestamptz not null default now());
+create table if not exists public.content_pages (id uuid primary key default gen_random_uuid(), slug text unique not null, kind text not null check (kind in ('faq','health_tip','homepage_banner')), title text not null, title_bn text, body text, body_bn text, metadata jsonb not null default '{}'::jsonb, is_active boolean not null default true, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+alter table public.site_settings enable row level security; alter table public.content_pages enable row level security;
+drop policy if exists "settings super all" on public.site_settings; create policy "settings super all" on public.site_settings for all using (public.current_role() = 'super_admin') with check (public.current_role() = 'super_admin');
+drop policy if exists "content public active" on public.content_pages; create policy "content public active" on public.content_pages for select using (is_active = true);
+drop policy if exists "content super all" on public.content_pages; create policy "content super all" on public.content_pages for all using (public.current_role() = 'super_admin') with check (public.current_role() = 'super_admin');
 insert into public.site_settings (key, value) values ('site', '{"paymentMethods":["counter","bkash","nagad","card"],"bookingFee":0,"cancellationWindowHours":6,"slotHoldMinutes":5,"emergencyPhones":["16263"]}'::jsonb) on conflict (key) do nothing;
