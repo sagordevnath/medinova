@@ -267,7 +267,7 @@ router.post(
       const slots = await tryQuery<Row[]>(() =>
         admin.rpc('get_available_slots', { p_doctor_branch_id: posting.id, p_date: date }),
       );
-      const wanted = String(body.scheduledAt).slice(11, 16);
+      const wanted = String(scheduledAt).slice(11, 16);
       const first = (slots ?? []).find((s) => s.is_available === true && (!wanted || String(s.slot_start).slice(0, 5) === wanted));
       if (!first) return res.status(409).json({ error: 'errors.slotTaken' });
       const { data, error } = await admin.rpc('book_appointment', {

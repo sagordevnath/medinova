@@ -228,6 +228,24 @@ export function appointmentsRouter(env: Env, logger: Logger): Router {
     }),
   );
 
+  const statusBody = z.object({ status: z.enum(['in_consultation', 'completed', 'no_show']) });
+
+  /** POST /appointments/:id/status — doctor-owned clinical queue action. */
+  r.post(
+    '/:id/status',
+    auth,
+    requireRole('doctor'),
+    h(async (req: Request, res: Response<Envelope<{ id: string; status: string; queueNo: number | null }>>) => {
+      const { id } = idParam.parse(req.params);
+      const { status } = statusBody.parse(req.body);
+      const appt = await loadAppointment(env, id);
+      assertCanAct(req.auth!, appt, ['doctor']);
+      if (['cancelled', 'no_show', 'completed'].includes(appt.status)) throw ApiError.conflict('errors.conflict');
+      await updateAppointment(env, id, { status });
+      res.json({ data: { id, status, queueNo: appt.queue_no == null ? null : Number(appt.queue_no) } });
+    }),
+  );
+
   /** GET /appointments/:id/slip.pdf — PDF slip with scannable check-in QR. */
   r.get(
     '/:id/slip.pdf',

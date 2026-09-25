@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { type Env } from '../config/env.js';
-import { requireAuth, verifySupabaseJwt } from '../middleware/auth.js';
+import { requireAuth, requireRole, verifySupabaseJwt } from '../middleware/auth.js';
 import { h } from '../utils/async.js';
 import { ApiError } from '../utils/errors.js';
 import type { Logger } from '../utils/logger.js';
@@ -31,6 +31,36 @@ interface RxRow {
 export function prescriptionsRouter(env: Env, logger: Logger): Router {
   const r: Router = Router();
   const auth = verifySupabaseJwt(env);
+
+  const prescriptionBody = z.object({
+    diagnosis: z.string().max(500).optional().nullable(),
+    medicines: z.array(z.record(z.unknown())).max(50),
+    advice: z.string().max(2000).optional().nullable(),
+    nextVisitDate: z.string().date().optional().nullable(),
+  });
+
+  r.post(
+    '/:appointmentId',
+    auth,
+    requireRole('doctor'),
+    h(async (req: Request, res: Response<{ data: { prescriptionId: string } }>) => {
+      const { appointmentId } = idParam.parse(req.params);
+      const appt = await loadAppointment(env, appointmentId);
+      assertCanAct(req.auth!, appt, ['doctor']);
+      const body = prescriptionBody.parse(req.body);
+      const { data, error } = await getSupabaseAdmin(env).from('prescriptions').insert({
+        appointment_id: appointmentId,
+        doctor_id: appt.doctor_id,
+        patient_id: appt.patient_id,
+        diagnosis: body.diagnosis ?? null,
+        medicines: body.medicines,
+        advice: body.advice ?? null,
+        next_visit_date: body.nextVisitDate ?? null,
+      }).select('id').single();
+      if (error) throw ApiError.upstream('errors.upstream', error.message);
+      res.status(201).json({ data: { prescriptionId: data.id } });
+    }),
+  );
 
   r.post(
     '/:appointmentId/pdf',

@@ -17,6 +17,7 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage').then((m) => ({ de
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })));
 const DashboardsPage = lazy(() => import('./pages/DashboardsPage').then((m) => ({ default: m.DashboardsPage })));
+const DoctorWorkspacePage = lazy(() => import('./pages/DoctorWorkspacePage').then((m) => ({ default: m.DoctorWorkspacePage })));
 
 function fallback() {
   return (
@@ -47,7 +48,7 @@ const routes: RouteObject[] = [
       { path: 'forgot-password', element: <Suspense fallback={fallback()}><ForgotPasswordPage /></Suspense> },
       { path: 'reset-password', element: <Suspense fallback={fallback()}><ResetPasswordPage /></Suspense> },
       { path: 'account', element: <ProtectedRoute roles={['patient']}><Suspense fallback={fallback()}><DashboardsPage /></Suspense></ProtectedRoute> },
-      { path: 'doctor', element: <ProtectedRoute roles={['doctor']}><Suspense fallback={fallback()}><DashboardsPage /></Suspense></ProtectedRoute> },
+      { path: 'doctor', element: <ProtectedRoute roles={['doctor']}><Suspense fallback={fallback()}><DoctorWorkspacePage /></Suspense></ProtectedRoute> },
       { path: 'reception', element: <ProtectedRoute roles={['receptionist']}><Suspense fallback={fallback()}><DashboardsPage /></Suspense></ProtectedRoute> },
       { path: 'branch-admin', element: <ProtectedRoute roles={['branch_admin']}><Suspense fallback={fallback()}><DashboardsPage /></Suspense></ProtectedRoute> },
       { path: 'admin', element: <ProtectedRoute roles={['super_admin']}><Suspense fallback={fallback()}><DashboardsPage /></Suspense></ProtectedRoute> },
