@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import { Router, type Router as ExpressRouter, type Request, type Response } from 'express';
 import { z } from 'zod';
 import {
@@ -9,6 +10,7 @@ import {
 } from '@medinova/shared';
 import { loadEnv, type Env } from '../config/env.js';
 import { getSupabaseAdmin } from '../utils/supabase.js';
+import { verifySupabaseJwt } from '../middleware/auth.js';
 
 /** Public catalog: branches, departments, doctors, slots + booking (Module 2/3 compatibility). */
 export const router: ExpressRouter = Router();
@@ -17,14 +19,29 @@ const env: Env = loadEnv();
 type Envelope<T> = { data: T; meta?: Record<string, unknown> };
 type Row = Record<string, unknown>;
 
-/** Run a Supabase query; return null on error so catalog routes degrade to [] offline. */
+/**
+ * Run a Supabase query for a public catalog route.
+ *
+ * Catalog data is readable with the anon/publishable key, so a failure here
+ * usually means the API is misconfigured (wrong SUPABASE_URL or an invalid
+ * key). Log it instead of returning [] silently, otherwise a config error
+ * looks exactly like "the database is empty" in the UI.
+ */
 async function tryQuery<T>(
   fn: () => PromiseLike<{ data: T | null; error: { message: string } | null }>,
+  label: string,
 ): Promise<T | null> {
   try {
     const { data, error } = await fn();
-    return error ? null : (data as T);
-  } catch {
+    if (error) {
+      console.error(
+        { msg: 'catalog query failed', route: label, error: error.message, supabaseUrl: env.SUPABASE_URL },
+      );
+      return null;
+    }
+    return data as T;
+  } catch (e) {
+    console.error({ msg: 'catalog query threw', route: label, error: (e as Error).message, supabaseUrl: env.SUPABASE_URL });
     return null;
   }
 }
@@ -76,9 +93,131 @@ const toDepartment = (r: Row) =>
     isActive: r.is_active,
   });
 
+/**
+ * GET /v1/me — the caller's profile plus the patient records they can book for.
+ *
+ * Booking needs a real public.patients row id, but the browser only holds an
+ * auth user id. This resolves it server-side from the verified token, so the
+ * client never has to invent (or hardcode) a patient id.
+ */
+const meAuth = verifySupabaseJwt(env);
+router.get('/me', meAuth, async (req: Request, res: Response<Envelope<unknown> | { error: string }>) => {
+  const auth = req.auth;
+  if (!auth?.userId || !auth.accessToken) return res.status(401).json({ error: 'errors.unauthorized' });
+  const userId = auth.userId;
+
+  // Query as the caller so RLS applies their own policy. The 2nd arg to
+  // createClient is the apikey, so it must be the anon key — the user's access
+  // token belongs in the Authorization header, which supabase-js sets for us.
+  // Passing the token as the apikey made PostgREST answer "Invalid API key",
+  // which surfaced as a silently empty profile.
+  const userClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${auth.accessToken}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const [profile, patients] = await Promise.all([
+    userClient
+      .from('profiles')
+      .select('id, full_name, phone, role, branch_id, avatar_url, preferred_lang')
+      .eq('id', userId)
+      .maybeSingle(),
+    userClient
+      .from('patients')
+      .select('id, full_name, dob, gender, phone, blood_group, address, allergies, chronic_conditions')
+      .eq('owner_id', userId)
+      .order('created_at'),
+  ]);
+
+  if (profile.error || patients.error) {
+    console.error({
+      msg: '/v1/me query failed',
+      profileError: profile.error?.message,
+      patientsError: patients.error?.message,
+    });
+  }
+
+  res.json({
+    data: {
+      userId,
+      profile: profile.data
+        ? {
+            fullName: profile.data.full_name,
+            phone: profile.data.phone,
+            role: profile.data.role,
+            branchId: profile.data.branch_id,
+            avatarUrl: profile.data.avatar_url,
+            preferredLang: profile.data.preferred_lang,
+          }
+        : null,
+      patients: (patients.data ?? []).map((p) => ({
+        id: p.id,
+        fullName: p.full_name,
+        dob: p.dob,
+        gender: p.gender,
+        phone: p.phone,
+        bloodGroup: p.blood_group,
+        address: p.address,
+        allergies: p.allergies,
+        chronicConditions: p.chronic_conditions,
+      })),
+    },
+    meta: { degraded: !profile.data && !(patients.data ?? []).length },
+  });
+});
+
 router.get('/settings', async (_req: Request, res: Response<Envelope<unknown>>) => {
-  const row = await tryQuery<{ value: unknown }>(() => getSupabaseAdmin(env).from('site_settings').select('value').eq('key', 'features').maybeSingle());
+  const row = await tryQuery<{ value: unknown }>(
+    () => getSupabaseAdmin(env).from('site_settings').select('value').eq('key', 'features').maybeSingle(),
+    'settings',
+  );
   res.json({ data: row?.value ?? {}, meta: { degraded: row === null } });
+});
+
+/**
+ * Public subscription plans.
+ *
+ * This is the page a clinic owner reads before deciding to buy, so it has to
+ * work for anonymous visitors. Migration 0014 already grants anon SELECT on
+ * plans where is_active, so no auth middleware is needed here.
+ *
+ * Prices are returned as taka for display even though the database stores
+ * paisa; -1 encodes "unlimited" and is normalised to null so the UI never
+ * renders a negative price or limit.
+ */
+router.get('/plans', async (_req: Request, res: Response<Envelope<Row[]>>) => {
+  const rows = await tryQuery<Row[]>(
+    () =>
+    getSupabaseAdmin(env)
+        .from('plans')
+        .select(
+          'code, name, tagline, price_monthly_paisa, price_yearly_paisa, branch_limit, doctor_limit, staff_seat_limit, monthly_appointment_limit, features, sort_order',
+        )
+        .eq('is_active', true)
+        .order('sort_order'),
+    'plans',
+  );
+
+  const toTaka = (paisa: unknown) => Math.round(Number(paisa ?? 0)) / 100;
+  const limit = (n: unknown) => {
+    const v = Number(n);
+    return v < 0 ? null : v;
+  };
+
+  res.json({
+    data: (rows ?? []).map((row) => ({
+      code: row.code,
+      name: row.name,
+      tagline: row.tagline ?? null,
+      monthlyTaka: toTaka(row.price_monthly_paisa),
+      yearlyTaka: toTaka(row.price_yearly_paisa),
+      branchLimit: limit(row.branch_limit),
+      doctorLimit: limit(row.doctor_limit),
+      staffSeatLimit: limit(row.staff_seat_limit),
+      monthlyAppointmentLimit: limit(row.monthly_appointment_limit),
+      features: Array.isArray(row.features) ? row.features : [],
+    })),
+  });
 });
 
 router.get('/branches', async (_req: Request, res: Response<Envelope<unknown[]>>) => {
@@ -90,6 +229,7 @@ router.get('/branches', async (_req: Request, res: Response<Envelope<unknown[]>>
       )
       .eq('is_active', true)
       .order('name'),
+    'branches',
   );
   const data = (rows ?? []).map(toBranch);
   res.json({ data, meta: { page: 1, total: data.length, degraded: rows === null } });
@@ -104,7 +244,7 @@ router.get('/departments', async (req: Request, res: Response<Envelope<unknown[]
     .eq('is_active', true)
     .order('name');
   if (query.data.medicineType) q = q.eq('medicine_type', query.data.medicineType);
-  const rows = await tryQuery<Row[]>(() => q);
+  const rows = await tryQuery<Row[]>(() => q, 'departments');
   const data = (rows ?? []).map(toDepartment);
   res.json({ data, meta: { medicineType: query.data.medicineType ?? 'all', degraded: rows === null } });
 });
@@ -127,7 +267,7 @@ router.get('/doctors', async (req: Request, res: Response<Envelope<unknown[]> | 
     .eq('is_active', true)
     .order('full_name');
   if (query.data.medicineType) q = q.eq('medicine_type', query.data.medicineType);
-  const rows = await tryQuery<Row[]>(() => q);
+  const rows = await tryQuery<Row[]>(() => q, 'doctors');
 
   const data = (rows ?? [])
     .map((row) => {
@@ -177,9 +317,64 @@ router.get('/doctors', async (req: Request, res: Response<Envelope<unknown[]> | 
 router.get('/doctors/:slug', async (req: Request, res: Response<Envelope<unknown> | { error: string }>) => {
   const slug = z.string().min(2).safeParse(req.params.slug);
   if (!slug.success) return res.status(400).json({ error: 'errors.invalidParams' });
-  const row = await tryQuery<Row>(() => getSupabaseAdmin(env).from('doctor_listing_view').select('*').eq('slug', slug.data).eq('is_active', true).maybeSingle());
+  const row = await tryQuery<Row>(
+    () => getSupabaseAdmin(env).from('doctor_listing_view').select('*').eq('slug', slug.data).eq('is_active', true).maybeSingle(),
+    'doctor-detail',
+  );
   if (!row) return res.status(404).json({ error: 'errors.notFound' });
-  res.json({ data: row, meta: { source: 'doctor_listing_view' } });
+
+  // doctor_listing_view returns raw snake_case columns. The list route maps
+  // them through doctorSchema, but this route was returning the row as-is, so
+  // DoctorProfilePage read `fullName` and got undefined. Map it the same way.
+  const parsed = doctorSchema.safeParse({
+    id: row.id,
+    profileId: row.profile_id,
+    departmentId: row.department_id,
+    medicineType: row.medicine_type,
+    fullName: row.full_name,
+    fullNameBn: row.full_name_bn,
+    slug: row.slug,
+    bio: row.bio,
+    qualifications: row.qualifications,
+    specialties: row.specialties,
+    experienceYears: row.experience_years,
+    registrationNo: row.registration_no,
+    photoUrl: row.photo_url,
+    languages: row.languages,
+    telemedicineEnabled: row.telemedicine_enabled,
+    isActive: row.is_active,
+  });
+  if (!parsed.success) {
+    console.error({ msg: 'doctor detail failed schema', slug: slug.data, issues: parsed.error.issues });
+    return res.status(502).json({ error: 'errors.upstream' });
+  }
+
+  // doctor_listing_view already builds the `branches` and `schedules` arrays as
+  // camelCase JSON (see 0008_doctor_discovery.sql), so pass them through rather
+  // than re-mapping snake_case keys that do not exist there.
+  const postings = Array.isArray(row.branches) ? (row.branches as Row[]) : [];
+  res.json({
+    data: {
+      ...parsed.data,
+      ratingAvg: Number(row.rating_avg ?? 0),
+      ratingCount: Number(row.rating_count ?? 0),
+      departmentName: row.department_name ?? null,
+      departmentNameBn: row.department_name_bn ?? null,
+      minFee: row.min_fee == null ? null : Number(row.min_fee),
+      schedules: row.schedules ?? [],
+      fees: postings.map((b) => ({
+        id: b.id,
+        doctorId: parsed.data.id,
+        branchId: b.branchId,
+        consultationFee: Number(b.consultationFee ?? 0),
+        followupFee: Number(b.followupFee ?? 0),
+        followupValidDays: Number(b.followupValidDays ?? 0),
+        telemedicineFee: b.telemedicineFee == null ? null : Number(b.telemedicineFee),
+        roomNo: b.roomNo ?? null,
+      })),
+    },
+    meta: { source: 'doctor_listing_view' },
+  });
 });
 
 router.get('/doctors/:id/slots', async (req: Request, res: Response<Envelope<unknown[]> | { error: string }>) => {
@@ -195,14 +390,17 @@ router.get('/doctors/:id/slots', async (req: Request, res: Response<Envelope<unk
       .eq('doctor_id', params.data.id)
       .eq('branch_id', query.data.branchId)
       .maybeSingle(),
+    'doctor-posting',
   );
   if (!posting) return res.status(404).json({ error: 'errors.notFound' });
 
-  const rows = await tryQuery<Row[]>(() =>
-    getSupabaseAdmin(env).rpc('get_available_slots', {
-      p_doctor_branch_id: posting.id,
-      p_date: query.data.date,
-    }),
+  const rows = await tryQuery<Row[]>(
+    () =>
+      getSupabaseAdmin(env).rpc('get_available_slots', {
+        p_doctor_branch_id: posting.id,
+        p_date: query.data.date,
+      }),
+    'slots',
   );
   res.json({
     data: (rows ?? []).map((s) => ({
@@ -226,6 +424,7 @@ async function findPosting(doctorId: string, branchId: string): Promise<{ id: st
       .eq('doctor_id', doctorId)
       .eq('branch_id', branchId)
       .maybeSingle(),
+    'find-posting',
   );
   return row ?? null;
 }
@@ -236,6 +435,7 @@ function bookingError(error: { message: string }): number {
   if (msg.includes('SLOT_TAKEN')) return 409;
   if (msg.includes('DOCTOR_BRANCH_NOT_FOUND') || msg.includes('DOCTOR_INACTIVE')) return 404;
   if (msg.includes('TELEMEDICINE_DISABLED')) return 422;
+  if (/patients.*foreign key|violates foreign key constraint/i.test(msg)) return 404;
   return 502;
 }
 
@@ -270,7 +470,7 @@ router.post(
         p_visit_type: visitType,
         p_symptoms: symptoms ?? null,
       });
-      if (error) return res.status(bookingError(error)).json({ error: errorKey(error) });
+      if (error) { logBookingError(error); return res.status(bookingError(error)).json({ error: errorKey(error) }); }
       return res.status(201).json({ data });
     }
 
@@ -283,8 +483,9 @@ router.post(
       const posting = await findPosting(doctorId, branchId);
       if (!posting) return res.status(404).json({ error: 'errors.doctorBranchNotFound' });
       const { date } = dhakaParts(scheduledAt);
-      const slots = await tryQuery<Row[]>(() =>
-        admin.rpc('get_available_slots', { p_doctor_branch_id: posting.id, p_date: date }),
+      const slots = await tryQuery<Row[]>(
+        () => admin.rpc('get_available_slots', { p_doctor_branch_id: posting.id, p_date: date }),
+        'legacy-slots',
       );
       const wanted = String(scheduledAt).slice(11, 16);
       const first = (slots ?? []).find((s) => s.is_available === true && (!wanted || String(s.slot_start).slice(0, 5) === wanted));
@@ -297,7 +498,7 @@ router.post(
         p_visit_type: visitType,
         p_symptoms: notes ?? null,
       });
-      if (error) return res.status(bookingError(error)).json({ error: errorKey(error) });
+      if (error) { logBookingError(error); return res.status(bookingError(error)).json({ error: errorKey(error) }); }
       return res.status(201).json({ data });
     }
 
@@ -309,7 +510,15 @@ function errorKey(error: { message: string }): string {
   const msg = error.message ?? '';
   if (msg.includes('SLOT_TAKEN')) return 'errors.slotTaken';
   if (msg.includes('TELEMEDICINE_DISABLED')) return 'errors.telemedicineDisabled';
+  // A patient_id with no matching public.patients row. The client used to send
+  // a hardcoded nil UUID here, which fails the FK rather than validation.
+  if (/patients.*foreign key|violates foreign key constraint/i.test(msg)) return 'errors.patientNotFound';
   return 'errors.upstream';
+}
+
+/** Log the raw DB error so an unmapped failure is diagnosable, not just a 502. */
+function logBookingError(error: { message: string }): void {
+  console.error({ msg: 'book_appointment failed', error: error.message, supabaseUrl: env.SUPABASE_URL });
 }
 
 export const _schemas = { branchSchema, departmentSchema, doctorSchema };

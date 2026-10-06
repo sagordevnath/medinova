@@ -1,0 +1,18 @@
+{
+  "title": "My profile",
+  "userId": "Account ID",
+  "phone": "Phone",
+  "language": "Language",
+  "branch": "Branch",
+  "allBranches": "All branches",
+  "familyTitle": "My patients",
+  "familyBody": "You can book an appointment for any of these records.",
+  "noPatients": "No patient records yet. They are created automatically when you register.",
+  "dob": "Date of birth",
+  "allergies": "Allergies",
+  "chronic": "Chronic conditions",
+  "bookNow": "Book an appointment",
+  "signInRequired": "Please sign in",
+  "signInBody": "Your profile is only visible while you are signed in.",
+  "loadFailed": "Could not load your profile."
+}

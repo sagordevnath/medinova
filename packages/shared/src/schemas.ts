@@ -30,7 +30,9 @@ export const branchSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   phone: z.string().min(6).max(20),
-  emergencyPhone: z.string().min(6).max(20),
+  // Short-form national emergency numbers are valid here (999, 112, 16263),
+  // so this must stay looser than the branch phone number.
+  emergencyPhone: z.string().min(3).max(20),
   email: z.string().email().nullable().optional(),
   openingHours: z.record(z.string()).default({}),
   facilities: z.array(z.string()).default([]),
@@ -118,6 +120,68 @@ export const patientSchema = z.object({
   address: z.string().max(300).nullable().optional(),
   allergies: z.string().max(500).nullable().optional(),
   chronicConditions: z.string().max(500).nullable().optional(),
+});
+
+// --- Module 17: clinical encounters, vitals, structured history ---------------
+
+export const encounterVisitTypeSchema = z.enum(['new', 'followup', 'telemedicine', 'walk_in']);
+export const encounterStatusSchema = z.enum(['open', 'completed', 'cancelled']);
+export const historyKindSchema = z.enum(['medical', 'surgical', 'family', 'immunization', 'obstetric', 'allergy']);
+
+export const vitalsSchema = z.object({
+  bpSystolic: z.number().int().min(40).max(300).nullable().optional(),
+  bpDiastolic: z.number().int().min(20).max(200).nullable().optional(),
+  pulse: z.number().int().min(20).max(250).nullable().optional(),
+  temperatureC: z.number().min(25).max(45).nullable().optional(),
+  weightKg: z.number().positive().max(500).nullable().optional(),
+  heightCm: z.number().positive().max(260).nullable().optional(),
+  spo2: z.number().int().min(50).max(100).nullable().optional(),
+  respiratoryRate: z.number().int().min(5).max(80).nullable().optional(),
+  notes: z.string().max(500).nullable().optional(),
+});
+
+export const encounterCreateSchema = z
+  .object({
+    patientId: z.string().uuid(),
+    appointmentId: z.string().uuid().nullable().optional(),
+    doctorId: z.string().uuid().nullable().optional(),
+    branchId: z.string().uuid().nullable().optional(),
+    visitType: encounterVisitTypeSchema.default('new'),
+    status: encounterStatusSchema.default('open'),
+    chiefComplaint: z.string().max(500).nullable().optional(),
+    historyOfPresentIllness: z.string().max(4000).nullable().optional(),
+    examination: z.string().max(4000).nullable().optional(),
+    diagnosisCode: z.string().max(16).nullable().optional(),
+    diagnosisText: z.string().max(500).nullable().optional(),
+    plan: z.string().max(4000).nullable().optional(),
+    advice: z.string().max(2000).nullable().optional(),
+    vitals: vitalsSchema.partial().optional(),
+  })
+  .refine((v) => !v.appointmentId || !!v.doctorId, {
+    message: 'doctorId is required when linking an encounter to an appointment',
+    path: ['doctorId'],
+  });
+
+export const encounterUpdateSchema = z.object({
+  status: encounterStatusSchema.optional(),
+  chiefComplaint: z.string().max(500).nullable().optional(),
+  historyOfPresentIllness: z.string().max(4000).nullable().optional(),
+  examination: z.string().max(4000).nullable().optional(),
+  diagnosisCode: z.string().max(16).nullable().optional(),
+  diagnosisText: z.string().max(500).nullable().optional(),
+  plan: z.string().max(4000).nullable().optional(),
+  advice: z.string().max(2000).nullable().optional(),
+  vitals: vitalsSchema.partial().optional(),
+});
+
+export const medicalHistorySchema = z.object({
+  patientId: z.string().uuid(),
+  kind: historyKindSchema,
+  condition: z.string().min(1).max(200),
+  onsetDate: z.string().date().nullable().optional(),
+  resolvedDate: z.string().date().nullable().optional(),
+  code: z.string().max(16).nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
 });
 
 export const bookSlotSchema = z.object({

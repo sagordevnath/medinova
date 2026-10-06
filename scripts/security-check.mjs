@@ -13,4 +13,26 @@ for (const table of ['patients','appointments','prescriptions','medical_records'
 if (!migrations.includes('super all') || !migrations.includes('storage.objects')) fail('missing super-admin/storage policy evidence');
 if (!existsSync('docs/SECURITY.md')) fail('missing docs/SECURITY.md');
 if (!existsSync('scripts/backup-postgres.ps1')) fail('missing weekly backup script');
+
+// Committed env templates must never carry a real key value. An anon key
+// pasted into the SUPABASE_SERVICE_ROLE_KEY slot is the specific trap here: it
+// is a valid 200-char JWT, so nothing rejects it, but RLS still applies and
+// staff routes silently read no rows.
+for (const f of ['apps/api/.env.example', 'apps/web/.env.example']) {
+  if (!existsSync(f)) continue;
+  for (const line of readFileSync(f, 'utf8').split(/\r?\n/)) {
+    if (!line.startsWith('SUPABASE_SERVICE_ROLE_KEY=')) continue;
+    const value = line.slice('SUPABASE_SERVICE_ROLE_KEY='.length).trim();
+    if (!value) continue; // empty placeholder is correct
+    let role = null;
+    if (value.split('.').length === 3) {
+      try { role = JSON.parse(Buffer.from(value.split('.')[1], 'base64url').toString()).role; } catch { /* ignore */ }
+    }
+    fail(`${f} has a SUPABASE_SERVICE_ROLE_KEY value (role=${role ?? 'unknown'}); templates must ship it empty`);
+  }
+  // The publishable key is browser-safe and meant to be committed.
+  if (existsSync('apps/web/.env.example') && /SUPABASE_SERVICE_ROLE_KEY=/.test(readFileSync('apps/web/.env.example', 'utf8'))) {
+    fail('apps/web/.env.example declares SUPABASE_SERVICE_ROLE_KEY; a server secret must never reach the browser bundle');
+  }
+}
 if (failures) process.exit(1); pass(`security static checks (${files.length} files scanned)`);

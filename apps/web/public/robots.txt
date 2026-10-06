@@ -1,0 +1,8 @@
+﻿User-agent: *
+Allow: /
+Disallow: /account
+Disallow: /doctor
+Disallow: /reception
+Disallow: /branch-admin
+Disallow: /admin
+Sitemap: https://medinova.example/sitemap.xml

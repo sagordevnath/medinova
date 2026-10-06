@@ -128,6 +128,11 @@ const ADAPTERS: Record<PaymentProvider, Adapter> = {
   sslcommerz: sslcommerzAdapter,
 };
 
+/** Taka -> paisa. payments.amount is stored as an integer paisa count
+ * (migration 0016); appointments.fee stays numeric taka. Mixing them makes a
+ * BDT 1000 payment look like BDT 0.01 on an invoice. */
+const toPaisa = (taka: number): number => Math.round(taka * 100);
+
 /** Load appointment fee + owner for payment init (404 when unknown). */
 async function loadPaymentTarget(
   env: Env,
@@ -176,7 +181,7 @@ export async function initPayment(env: Env, logger: Logger, input: InitInput): P
   if (!existing[0]) {
     const { error } = await getSupabaseAdmin(env).from('payments').insert({
       appointment_id: input.appointmentId,
-      amount: target.fee,
+      amount: toPaisa(target.fee),
       method: input.provider,
       provider_ref: providerRef,
       status: 'unpaid',

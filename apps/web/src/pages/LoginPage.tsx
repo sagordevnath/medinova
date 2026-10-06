@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, GlassCard } from '@/components/Button';
 import { Field, Input } from '@/components/fields';
 import { useAuth } from '@/hooks/useAuth';
+import { errorI18nKey } from '@/lib/errorKeys';
 import { useToast } from '@/providers/ToastProvider';
 import { ROLE_DASHBOARD } from '@medinova/shared';
 
@@ -31,7 +32,7 @@ export function LoginPage() {
     navigate(from ?? ROLE_DASHBOARD[role], { replace: true });
   }, [loading, session, role, from, navigate]);
 
-  const fail = (errorKey?: string) => setFormError(t(errorKey ?? 'errors:authGeneric'));
+  const fail = (errorKey?: string) => setFormError(t(errorI18nKey(errorKey)));
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

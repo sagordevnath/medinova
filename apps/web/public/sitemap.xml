@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://medinova.example/</loc></url>
+  <url><loc>https://medinova.example/doctors</loc></url>
+  <url><loc>https://medinova.example/departments</loc></url>
+  <url><loc>https://medinova.example/branches</loc></url>
+  <url><loc>https://medinova.example/book</loc></url>
+</urlset>

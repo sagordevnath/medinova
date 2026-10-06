@@ -6,7 +6,7 @@
   "backHome": "Back to home",
   "invalidParams": "Invalid request",
   "slotTaken": "That time slot was just booked. Please pick another.",
-  "doctorBranchNotFound": "This doctor does not practice at the selected branch",
+  "doctorBranchNotFound": "This doctor does not practise at the selected branch",
   "telemedicineDisabled": "Telemedicine is not available for this doctor",
   "upstream": "Booking service unavailable",
   "unavailable": "Service unavailable. Please try again.",
@@ -19,5 +19,9 @@
   "authSessionExpired": "Your session expired. Please sign in again.",
   "authNotConfigured": "Supabase auth is not configured (missing environment variables)",
   "authNetwork": "Network error. Please check your connection.",
-  "authGeneric": "Sign-in failed. Please try again."
+  "authGeneric": "Sign-in failed. Please try again.",
+  "authEmailProviderDisabled": "Email sign-in is currently disabled. Please contact support.",
+  "authSignupDisabled": "Registration is currently closed. Please contact support.",
+  "patientRequired": "Please sign in to book an appointment",
+  "patientNotFound": "No patient record found for this account"
 }

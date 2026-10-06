@@ -3,10 +3,13 @@
   "findDoctor": "Find Doctor",
   "departments": "Departments",
   "branches": "Branches",
+  "pricing": "Pricing",
+  "demo": "Live demo",
   "doctors": "Doctors",
   "book": "Book Appointment",
   "dashboard": "Dashboard",
   "login": "Login",
   "logout": "Sign out",
-  "designSystem": "Design System"
+  "designSystem": "Design System",
+  "signOut": "Sign out"
 }

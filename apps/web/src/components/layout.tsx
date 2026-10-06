@@ -1,7 +1,8 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CalendarPlus, Home, MapPin, PhoneCall, Search, Menu } from 'lucide-react';
+import { BadgeCheck, CalendarPlus, Home, MapPin, PhoneCall, PlayCircle, Search, ShieldCheck, Menu } from 'lucide-react';
 import { ThemeToggle, LanguageSwitcher } from './toggles';
+import { AccountMenu } from './AccountMenu';
 import { useState } from 'react';
 import { Drawer } from './overlays';
 import { ROLE_DASHBOARD } from '@medinova/shared';
@@ -33,12 +34,14 @@ function DashboardLink() {
 
 export function Header() {
   const { t } = useTranslation(['nav', 'common']);
-  const { session, role } = useAuth();
+  const { session, role, signOut } = useAuth();
   const [menu, setMenu] = useState(false);
   const links = [
     { to: '/doctors', label: t('nav:findDoctor') },
     { to: '/departments', label: t('nav:departments') },
     { to: '/branches', label: t('nav:branches') },
+    { to: '/pricing', label: t('nav:pricing') },
+    { to: '/demo', label: t('nav:demo') },
   ];
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-glass">
@@ -67,6 +70,7 @@ export function Header() {
           <LanguageSwitcher />
           <ThemeToggle />
           <DashboardLink />
+          <AccountMenu />
           <Link to="/book" className="btn-gradient glow hidden min-h-[44px] items-center rounded-xl px-4 text-sm sm:inline-flex">
             {t('nav:book')}
           </Link>
@@ -81,6 +85,23 @@ export function Header() {
               </Link>
             ),
           )}
+          {session && (
+            <>
+              <Link to="/profile" onClick={() => setMenu(false)} className="rounded-xl border border-border p-3">
+                {t('common:profile')}
+              </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  setMenu(false);
+                  await signOut();
+                }}
+                className="rounded-xl border border-border p-3 text-left font-semibold text-red-600 dark:text-red-400"
+              >
+                {t('nav:signOut')}
+              </button>
+            </>
+          )}
         </nav>
       </Drawer>
     </header>
@@ -94,6 +115,8 @@ export function MobileBottomNav() {
     { to: '/doctors', label: t('nav:findDoctor'), Icon: Search },
     { to: '/book', label: t('nav:book'), Icon: CalendarPlus },
     { to: '/branches', label: t('nav:branches'), Icon: MapPin },
+    { to: '/pricing', label: t('nav:pricing'), Icon: BadgeCheck },
+    { to: '/demo', label: t('nav:demo'), Icon: PlayCircle },
   ];
   return (
     <nav aria-label="Bottom" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/85 backdrop-blur-glass md:hidden">
@@ -117,27 +140,109 @@ export function MobileBottomNav() {
 
 export function Footer() {
   const { t } = useTranslation(['common']);
-  const branches = ['Dhanmondi · Dhaka', 'Chattogram · GEC', 'Sylhet · Zindabazar'];
+  // Only routes that actually exist. Linking to a 404 costs credibility with
+  // the exact audience (clinic owners) we are trying to convert.
+  const clinicLinks = [
+    { to: '/pricing', label: t('colPricing') },
+    { to: '/demo', label: t('colDemo') },
+    { to: '/register', label: t('colStartTrial') },
+  ];
+  const patientLinks = [
+    { to: '/doctors', label: t('colFindDoctor') },
+    { to: '/departments', label: t('colDepartments') },
+    { to: '/branches', label: t('colBranches') },
+    { to: '/book', label: t('colBook') },
+  ];
+
   return (
     <footer className="mt-16 border-t border-border pb-24 md:pb-8">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 md:grid-cols-3">
+      {/* Buyer CTA band. The footer is where a clinic owner's eye lands last,
+          and the whole product is B2B — patients never see this site for the
+          software, they book appointments. */}
+      <div className="mx-auto max-w-6xl px-4 pt-10">
+        <div className="mesh-hero grain relative overflow-hidden rounded-3xl border border-primary/30 p-6 md:p-8">
+          <div className="relative z-[2] flex flex-wrap items-center justify-between gap-5">
+            <div className="max-w-lg">
+              <h2 className="text-xl font-extrabold md:text-2xl">{t('footerForClinics')}</h2>
+              <p className="mt-2 text-sm opacity-80">{t('footerForClinicsBody')}</p>
+              <p className="mt-3 flex items-center gap-1.5 text-xs opacity-65">
+                <ShieldCheck size={13} className="text-primary" />
+                {t('footerSecurity')}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/demo" className="glass min-h-11 rounded-xl px-5 py-2.5 text-sm font-extrabold">
+                {t('colDemo')}
+              </Link>
+              <Link to="/pricing" className="btn-gradient glow min-h-11 rounded-xl px-6 py-2.5 text-sm font-extrabold">
+                {t('colPricing')}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-4">
         <div>
           <p className="text-lg font-extrabold">
             <span className="text-gradient">MediNova</span>
           </p>
-          <p className="mt-1 text-sm opacity-70">{t('common:tagline')}</p>
-          <p className="mt-2 text-sm font-bold">{t('common:hotline')}</p>
+          <p className="mt-1 text-sm opacity-70">{t('tagline')}</p>
+          <p className="mt-2 text-sm font-bold">{t('hotline')}</p>
         </div>
-        <nav aria-label="Branches">
-          <p className="text-sm font-extrabold uppercase tracking-wider opacity-60">Branches</p>
-          <ul className="mt-2 space-y-1 text-sm">
-            {branches.map((b) => (
-              <li key={b}>{b}</li>
+
+        <nav aria-label={t('footerProduct')}>
+          <p className="text-xs font-extrabold uppercase tracking-wider opacity-60">{t('footerProduct')}</p>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            {clinicLinks.map((l) => (
+              <li key={l.to}>
+                <Link to={l.to} className="opacity-80 transition-opacity hover:opacity-100 hover:text-primary">
+                  {l.label}
+                </Link>
+              </li>
             ))}
           </ul>
         </nav>
+
+        <nav aria-label={t('footerPatients')}>
+          <p className="text-xs font-extrabold uppercase tracking-wider opacity-60">{t('footerPatients')}</p>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            {patientLinks.map((l) => (
+              <li key={l.to}>
+                <Link to={l.to} className="opacity-80 transition-opacity hover:opacity-100 hover:text-primary">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
         <div>
-          <p className="text-sm opacity-70">Asia/Dhaka · BDT (৳) · EN + BN · PWA</p>
+          <p className="text-xs font-extrabold uppercase tracking-wider opacity-60">{t('footerCompany')}</p>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            <li>
+              <a
+                href="mailto:sales@medinova.example"
+                className="opacity-80 transition-opacity hover:opacity-100 hover:text-primary"
+              >
+                {t('footerSales')}
+              </a>
+            </li>
+            <li>
+              <Link to="/login" className="opacity-80 transition-opacity hover:opacity-100 hover:text-primary">
+                {t('colSignIn')}
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-6xl px-4 pb-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-5 text-xs opacity-60">
+          <span>
+            © {new Date().getFullYear()} MediNova. {t('footerRights')}
+          </span>
+          <span>Asia/Dhaka · BDT (৳) · EN + BN · PWA</span>
         </div>
       </div>
     </footer>

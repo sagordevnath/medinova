@@ -4,5 +4,34 @@
   "subtitle": "Book the right doctor at the right branch — transparent BDT fees, Bengali + English, online or in-person.",
   "ctaBook": "Book an appointment",
   "ctaExplore": "Explore branches",
-  "stats": { "branches": "Branches", "doctors": "Doctors", "patients": "Happy patients" }
+  "stats": { "branches": "Branches", "doctors": "Doctors", "patients": "Happy patients" },
+  "searchPlaceholder": "Search doctor, department or symptom",
+  "searchCta": "Search",
+  "noMatches": "No matches",
+  "emergencyTitle": "24/7 emergency support",
+  "emergencyBody": "Call our hotline or request an ambulance for safe transport.",
+  "requestAmbulance": "Request ambulance",
+  "departments": "Departments",
+  "featuredDoctors": "Featured doctors",
+  "viewAll": "View all",
+  "viewProfile": "View profile",
+  "feeOnRequest": "Fee on request",
+  "featuresTitle": "Why patients choose us",
+  "features": {
+    "fees": { "title": "Transparent fees", "body": "See BDT pricing before you book." },
+    "slots": { "title": "Real-time slots", "body": "Choose only available appointment times." },
+    "language": { "title": "Your language", "body": "English and Bengali, end to end." }
+  },
+  "packages": "Health packages",
+  "packagesDesc": "Tests and specialist consultation",
+  "comparePackages": "Compare packages",
+  "faqTitle": "Frequently asked questions",
+  "faqs": [
+    { "q": "How do I book an appointment?", "a": "Choose a doctor and branch, then select an available slot from the booking page." },
+    { "q": "Can I consult at home?", "a": "Yes. Doctors with telemedicine enabled can be booked for an online visit." },
+    { "q": "What payment methods are accepted?", "a": "You can pay online or at the branch. Fees are shown in BDT before booking." },
+    { "q": "How do I request an ambulance?", "a": "Call the emergency hotline immediately or use the ambulance request link above." }
+  ],
+  "forClinics": "Are you a clinic or hospital?",
+  "forClinicsBody": "Run your own clinic on MediNova — your branding, your doctors, your patients."
 }

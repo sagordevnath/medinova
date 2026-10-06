@@ -87,6 +87,106 @@
     background-image: linear-gradient(90deg, #14f1d9, #3b82f6, #8b5cf6);
     @apply font-bold text-[#070B1A];
   }
+
+  /* ---- Pricing page ----------------------------------------------------
+     Modern SaaS treatment: a gradient hairline border that needs no extra
+     markup (a wrapper div would break the GlassCard click area), plus a
+     spotlight that follows the pointer. Both are decorative, so they are
+     suppressed entirely under reduced-motion / high-contrast. */
+  .pricing-card {
+    position: relative;
+    isolation: isolate;
+    transition:
+      transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.25s ease;
+  }
+  .pricing-card:hover {
+    transform: translateY(-4px);
+  }
+  .pricing-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(140deg, #14f1d9, #3b82f6, #8b5cf6);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .pricing-card:hover::before,
+  .pricing-card[data-featured='true']::before {
+    opacity: 1;
+  }
+  /* Featured tier keeps a soft ambient glow so it reads as the default choice
+     even before the pointer arrives. */
+  .pricing-card[data-featured='true'] {
+    box-shadow:
+      0 24px 60px -20px rgba(59, 130, 246, 0.45),
+      0 0 0 1px rgba(59, 130, 246, 0.35);
+  }
+
+  /* Pointer-tracked radial highlight, set from JS as --mx / --my. */
+  .pricing-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      220px circle at var(--mx, 50%) var(--my, 0%),
+      rgba(255, 255, 255, 0.16),
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .pricing-card:hover::after {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pricing-card,
+    .pricing-card::before,
+    .pricing-card::after {
+      transition: none;
+    }
+    .pricing-card:hover {
+      transform: none;
+    }
+  }
+  @media (prefers-contrast: more) {
+    .pricing-card::before,
+    .pricing-card::after {
+      display: none;
+    }
+  }
+
+  /* Segmented billing toggle with a sliding indicator. */
+  .billing-toggle {
+    position: relative;
+  }
+  .billing-toggle__thumb {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    border-radius: 9999px;
+    background-image: linear-gradient(90deg, #14f1d9, #3b82f6);
+    transition:
+      left 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+      width 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 0;
+  }
+  .billing-toggle__thumb[data-beneath] {
+    background-image: linear-gradient(90deg, #14f1d9, #3b82f6, #8b5cf6);
+  }
 }
 
 .high-contrast {

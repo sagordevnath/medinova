@@ -19,5 +19,22 @@
   "close": "বন্ধ করুন",
   "viewAll": "সব দেখুন",
   "offlineTitle": "আপনি অফলাইনে আছেন",
-  "offlineBody": "আপনার সংযোগ পরীক্ষা করুন। করা বুকিং নিরাপদ আছে।"
+  "offlineBody": "আপনার সংযোগ পরীক্ষা করুন। করা বুকিং নিরাপদ আছে।",
+  "profile": "প্রোফাইল",
+  "footerForClinics": "আপনার ক্লিনিক MediNova-তে চালান",
+  "footerForClinicsBody": "আপনার ব্র্যান্ড, আপনার ডাক্তার, আপনার রোগী — বুকিং, বিলিং ও রেকর্ড এক জায়গায়।",
+  "footerProduct": "ক্লিনিকের জন্য",
+  "footerPatients": "রোগীদের জন্য",
+  "footerCompany": "প্রতিষ্ঠান",
+  "footerSales": "সেলসে কথা বলুন",
+  "footerRights": "সর্বস্বত্ব সংরক্ষিত।",
+  "footerSecurity": "রো-লেভেল সিকিউরিটিতে টেন্যান্ট তথ্য আলাদা রাখা হয়",
+  "colPricing": "মূল্য",
+  "colDemo": "ডেমো দেখুন",
+  "colFindDoctor": "ডাক্তার খুঁজুন",
+  "colDepartments": "বিভাগসমূহ",
+  "colBranches": "আমাদের শাখা",
+  "colBook": "অ্যাপয়েন্টমেন্ট বুক করুন",
+  "colSignIn": "স্টাফ সাইন ইন",
+  "colStartTrial": "ফ্রি ট্রায়াল শুরু করুন"
 }

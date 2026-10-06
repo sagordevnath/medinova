@@ -8,6 +8,9 @@ export interface AuthProfile {
   role: Role;
   branchId: string | null;
   fullName: string;
+  phone?: string | null;
+  /** Avatar shown in the header account menu; null falls back to initials. */
+  avatarUrl?: string | null;
 }
 
 export interface AuthResult {
@@ -25,7 +28,13 @@ export interface AuthContextValue {
   role: Role | null;
   loading: boolean;
   configured: boolean;
-  signUp: (input: { email: string; password: string; fullName: string }) => Promise<AuthResult>;
+  signUp: (input: {
+    email: string;
+    password: string;
+    fullName: string;
+    phone?: string;
+    preferredLang?: 'en' | 'bn';
+  }) => Promise<AuthResult>;
   signInWithEmail: (email: string, password: string) => Promise<AuthResult>;
   signInWithGoogle: () => Promise<AuthResult>;
   requestPhoneOtp: (phone: string) => Promise<AuthResult>;
@@ -35,7 +44,7 @@ export interface AuthContextValue {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
-const ROLES: Role[] = ['patient', 'doctor', 'receptionist', 'branch_admin', 'super_admin'];
+const ROLES: Role[] = ['patient', 'doctor', 'receptionist', 'branch_admin', 'org_admin', 'super_admin'];
 
 /** Translate Supabase auth errors into errors.* i18n keys. */
 export function mapAuthError(err: unknown): string {
@@ -44,6 +53,9 @@ export function mapAuthError(err: unknown): string {
   if (msg.includes('already registered')) return 'errors.authUserExists';
   if (msg.includes('password') && (msg.includes('least') || msg.includes('weak'))) return 'errors.authWeakPassword';
   if (msg.includes('email not confirmed')) return 'errors.authEmailUnconfirmed';
+  if (msg.includes('email logins are disabled') || msg.includes('email_provider_disabled'))
+    return 'errors.authEmailProviderDisabled';
+  if (msg.includes('signups not allowed') || msg.includes('signup is disabled')) return 'errors.authSignupDisabled';
   if (msg.includes('rate limit') || msg.includes('too many')) return 'errors.authRateLimited';
   if (msg.includes('otp') || msg.includes('expired')) return 'errors.authOtpExpired';
   if (msg.includes('fetch') || msg.includes('network')) return 'errors.authNetwork';
@@ -101,17 +113,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           supabase.auth.getUser(),
         ]);
         if (!active) return;
-        const row = rowRes as { role?: Role; branch_id?: string | null; full_name?: string | null } | null;
+        const row = rowRes as { role?: Role; branch_id?: string | null; full_name?: string | null; phone?: string | null; avatar_url?: string | null } | null;
         const meta = (userRes.user?.user_metadata ?? {}) as Record<string, unknown>;
         const rawRole = (row?.role ?? meta.role ?? 'patient') as Role;
         const role: Role = ROLES.includes(rawRole) ? rawRole : 'patient';
         const fullName = row?.full_name ?? (typeof meta.name === 'string' ? meta.name : null) ?? userRes.user?.email ?? '';
-        setProfile({ role, branchId: row?.branch_id ?? null, fullName });
+        setProfile({ role, branchId: row?.branch_id ?? null, fullName, phone: row?.phone ?? null, avatarUrl: row?.avatar_url ?? null });
         setProfileUserId(userId);
-      } catch {
-        if (!active) return;
-        setProfile({ role: 'patient', branchId: null, fullName: '' });
-        setProfileUserId(userId);
+      } catch (e) {
+        // A missing profile means the signup trigger did not run for this
+        // user. Falling back to a blank 'patient' profile silently hid that
+        // bug behind a working-looking dashboard, so log it loudly instead.
+        console.error('[medinova] profile lookup failed; signup trigger may be missing', e);
+        if (active) {
+          setProfile({ role: 'patient', branchId: null, fullName: session?.user?.email ?? '' });
+          setProfileUserId(userId);
+        }
       }
     })();
     return () => {
@@ -134,14 +151,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signUp = useCallback(
-    async ({ email, password, fullName }: { email: string; password: string; fullName: string }): Promise<AuthResult> => {
+    async ({
+      email,
+      password,
+      fullName,
+      phone,
+      preferredLang,
+    }: {
+      email: string;
+      password: string;
+      fullName: string;
+      phone?: string;
+      preferredLang?: 'en' | 'bn';
+    }): Promise<AuthResult> => {
       if (!supabaseConfigured) return notConfigured();
       try {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { name: fullName, full_name: fullName },
+            // handle_new_user() (migration 0013) reads these keys to build the
+            // profile + patients rows. Do not send a role: it is always patient.
+            data: {
+              full_name: fullName,
+              name: fullName,
+              ...(phone ? { phone } : {}),
+              ...(preferredLang ? { preferred_lang: preferredLang } : {}),
+            },
             emailRedirectTo: `${window.location.origin}/login`,
           },
         });

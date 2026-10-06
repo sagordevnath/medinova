@@ -14,6 +14,14 @@ import enErrors from './locales/en/errors.json';
 import bnErrors from './locales/bn/errors.json';
 import enAuth from './locales/en/auth.json';
 import bnAuth from './locales/bn/auth.json';
+import enProfile from './locales/en/profile.json';
+import enPricing from './locales/en/pricing.json';
+import bnPricing from './locales/bn/pricing.json';
+import enDemo from './locales/en/demo.json';
+import bnDemo from './locales/bn/demo.json';
+import bnProfile from './locales/bn/profile.json';
+import enConsult from './locales/en/consult.json';
+import bnConsult from './locales/bn/consult.json';
 
 const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('medinova-locale') : null;
 
@@ -27,6 +35,10 @@ void i18n.use(initReactI18next).init({
       dashboard: enDashboard,
       errors: enErrors,
       auth: enAuth,
+      profile: enProfile,
+      consult: enConsult,
+      pricing: enPricing,
+      demo: enDemo,
     },
     bn: {
       common: bnCommon,
@@ -36,6 +48,10 @@ void i18n.use(initReactI18next).init({
       dashboard: bnDashboard,
       errors: bnErrors,
       auth: bnAuth,
+      profile: bnProfile,
+      consult: bnConsult,
+      pricing: bnPricing,
+      demo: bnDemo,
     },
   },
   lng: stored === 'bn' ? 'bn' : 'en',

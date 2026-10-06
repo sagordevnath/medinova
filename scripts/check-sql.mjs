@@ -35,7 +35,36 @@ for (const file of files.sort()) {
   const close = (stripped.match(/\)/g) ?? []).length;
   if (open !== close) problems.push(`${file}: unbalanced parentheses (${open} open vs ${close} close)`);
 
-  for (const m of sql.matchAll(/create table(?: if not exists)? public\.([a-z_]+)/g)) createdTables.add(m[1]);
+  const lines = sql.split(/\r?\n/);
+
+  // Record where each table is actually created, per file.
+  const createdHere = new Map();
+  lines.forEach((l, i) => {
+    const m = l.match(/create table(?: if not exists)? public\.([a-z_]+)/i);
+    if (m) {
+      createdTables.add(m[1]);
+      if (!createdHere.has(m[1])) createdHere.set(m[1], i);
+    }
+  });
+
+  // A table must be created before anything in the SAME file references it. A
+  // scrambled migration (statements emitted out of order by a bad edit) fails
+  // here immediately, because Postgres rejects the forward reference.
+  lines.forEach((l, i) => {
+    const used = [
+      ...[...l.matchAll(/references public\.([a-z_]+)/gi)].map((m) => m[1]),
+      ...[...l.matchAll(/alter table public\.([a-z_]+)/gi)].map((m) => m[1]),
+    ];
+    for (const name of used) {
+      const defLine = createdHere.get(name);
+      if (defLine !== undefined && defLine > i) {
+        problems.push(
+          `${file}: line ${i + 1} uses ${name} but it is only created at line ${defLine + 1}`,
+        );
+      }
+    }
+  });
+
   for (const m of sql.matchAll(/alter table public\.([a-z_]+) enable row level security/g)) rlsTables.add(m[1]);
 }
 

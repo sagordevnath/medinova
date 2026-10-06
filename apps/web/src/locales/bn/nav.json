@@ -3,10 +3,13 @@
   "findDoctor": "ডাক্তার খুঁজুন",
   "departments": "বিভাগ",
   "branches": "শাখা",
+  "pricing": "মূল্য",
+  "demo": "ডেমো দেখুন",
   "doctors": "ডাক্তার",
   "book": "অ্যাপয়েন্টমেন্ট",
   "dashboard": "ড্যাশবোর্ড",
   "login": "লগইন",
   "logout": "সাইন আউট",
-  "designSystem": "ডিজাইন সিস্টেম"
+  "designSystem": "ডিজাইন সিস্টেম",
+  "signOut": "সাইন আউট"
 }

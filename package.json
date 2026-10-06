@@ -2,7 +2,7 @@
   "name": "medinova",
   "version": "0.1.0",
   "private": true,
-  "description": "MediNova — futuristic multi-branch hospital & clinic platform (Allopathic + Homeopathic), BDT, EN+BN, Asia/Dhaka. PWA.",
+  "description": "MediNova â€” futuristic multi-branch hospital & clinic platform (Allopathic + Homeopathic), BDT, EN+BN, Asia/Dhaka. PWA.",
   "packageManager": "pnpm@9.4.0",
   "engines": {
     "node": ">=20 <21"
@@ -25,7 +25,10 @@
     "test:db": "node scripts/db-verify.mjs",
     "test:rls": "node scripts/rls-test.mjs",
     "test:db:all": "node scripts/db-verify.mjs && node scripts/rls-test.mjs",
-    "test:security": "node scripts/security-check.mjs"
+    "test:security": "node scripts/security-check.mjs",
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "check:auth": "node scripts/check-auth.mjs",
+    "check:key": "node scripts/check-service-key.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
@@ -38,3 +41,5 @@
     "typescript": "^5.5.4"
   }
 }
+
+

@@ -1,11 +1,19 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 
-/** Parse an env-var boolean: unset → default; 'false|0|no|off' → false. */
+/** Parse an env-var boolean: unset â†’ default; 'false|0|no|off' â†’ false. */
 const envBool = (def: boolean) =>
   z.preprocess(
     (v) => (v === undefined || v === '' ? def : !['false', '0', 'no', 'off'].includes(String(v).toLowerCase())),
     z.boolean(),
   );
+
+/**
+ * `.env` files always define a key, often as an empty string. Treat `''` as
+ * undefined so `.optional()` behaves as expected instead of failing URL
+ * validation (e.g. `SMS_GATEWAY_URL=` in a local dev file).
+ */
+const emptyToUndefined = (schema: z.ZodTypeAny) =>
+  z.preprocess((v) => (v === '' ? undefined : v), schema);
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -18,7 +26,7 @@ const envSchema = z.object({
   /** HS256 secret for Supabase access tokens (Supabase project JWT secret). */
   JWT_SECRET: z.string().min(16).default('dev-only-change-me-min-32-chars'),
   /** Dedicated secret for appointment check-in QR tokens (defaults to JWT_SECRET). */
-  CHECKIN_SECRET: z.string().optional(),
+  CHECKIN_SECRET: emptyToUndefined(z.string().optional()),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 
   // Rate limits (per window, per IP).
@@ -37,37 +45,37 @@ const envSchema = z.object({
   CRON_ENABLED: envBool(true),
 
   // Notifications.
-  RESEND_API_KEY: z.string().optional(),
+  RESEND_API_KEY: emptyToUndefined(z.string().optional()),
   EMAIL_FROM: z.string().default('MediNova <onboarding@resend.dev>'),
   /** BD SMS gateway stub (local/dev): POST {to, text} with X-Api-Key. */
-  SMS_GATEWAY_URL: z.string().url().optional(),
-  SMS_API_KEY: z.string().optional(),
-  SMS_SENDER_ID: z.string().optional(),
+  SMS_GATEWAY_URL: emptyToUndefined(z.string().url().optional()),
+  SMS_API_KEY: emptyToUndefined(z.string().optional()),
+  SMS_SENDER_ID: emptyToUndefined(z.string().optional()),
 
   // AI triage.
   AI_PROVIDER: z.enum(['heuristic', 'gemini', 'claude']).default('heuristic'),
-  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: emptyToUndefined(z.string().optional()),
   GEMINI_MODEL: z.string().default('gemini-1.5-flash'),
-  CLAUDE_API_KEY: z.string().optional(),
+  CLAUDE_API_KEY: emptyToUndefined(z.string().optional()),
   CLAUDE_MODEL: z.string().default('claude-3-5-sonnet-latest'),
 
   // Storage.
   PRESCRIPTIONS_BUCKET: z.string().default('prescriptions'),
 
   // Payment adapters (sandbox configs; cash works with none of these).
-  TURNSTILE_SECRET_KEY: z.string().optional(),
-  TURNSTILE_SITE_KEY: z.string().optional(),
+  TURNSTILE_SECRET_KEY: emptyToUndefined(z.string().optional()),
+  TURNSTILE_SITE_KEY: emptyToUndefined(z.string().optional()),
   TURNSTILE_VERIFY_URL: z.string().url().default('https://challenges.cloudflare.com/turnstile/v0/siteverify'),
   PAYMENT_SANDBOX: envBool(true),
   BKASH_SANDBOX_URL: z.string().url().default('https://sandbox.bka.sh/v1.2.0-beta/checkout/pay'),
-  BKASH_APP_KEY: z.string().optional(),
-  BKASH_SECRET: z.string().optional(),
+  BKASH_APP_KEY: emptyToUndefined(z.string().optional()),
+  BKASH_SECRET: emptyToUndefined(z.string().optional()),
   NAGAD_SANDBOX_URL: z.string().url().default('https://sandbox.mynagad.com:8443/remote-payment-gateway-1.0/api/dfs'),
-  NAGAD_MERCHANT_ID: z.string().optional(),
-  NAGAD_SALT: z.string().optional(),
+  NAGAD_MERCHANT_ID: emptyToUndefined(z.string().optional()),
+  NAGAD_SALT: emptyToUndefined(z.string().optional()),
   SSLCOMMERZ_SANDBOX_URL: z.string().url().default('https://sandbox.sslcommerz.com/gwprocess/v4/api.php'),
-  SSLCOMMERZ_STORE_ID: z.string().optional(),
-  SSLCOMMERZ_SALT: z.string().optional(),
+  SSLCOMMERZ_STORE_ID: emptyToUndefined(z.string().optional()),
+  SSLCOMMERZ_SALT: emptyToUndefined(z.string().optional()),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -88,6 +96,15 @@ export function loadEnv(): Env {
 /** HS256 secret used to verify Supabase access tokens. */
 export function jwtSecret(env: Env): string {
   return env.JWT_SECRET;
+}
+
+/**
+ * True when JWT_SECRET is still the placeholder default. Verification against
+ * it rejects every real Supabase token with a bare 401, which is very hard to
+ * diagnose from the browser, so callers can warn instead of failing silently.
+ */
+export function isPlaceholderJwtSecret(env: Env): boolean {
+  return env.JWT_SECRET.startsWith('dev-only-change-me');
 }
 
 /** Secret used to sign/verify appointment check-in QR payloads. */

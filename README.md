@@ -1,39 +1,82 @@
-# MediNova — Futuristic Multi-Branch Hospital Platform
+﻿# MediNova — Multi-branch Hospital Platform
 
-> Allopathic + Homeopathic · Multi-branch · BDT (৳) · EN + BN · Asia/Dhaka · PWA + Supabase (free-tier only)
+Allopathic + Homeopathic care · multi-branch · BDT · EN + BN · PWA.
 
-## Monorepo
+## Architecture
 
+```text
+Browser / PWA ──> Vercel (apps/web SPA)
+       │               │
+       │ REST + JWT    │ Supabase Realtime
+       ▼               ▼
+Render Docker API ──> Supabase (Postgres + RLS + Auth + Storage)
+       │
+       ├─ Resend email
+       ├─ bKash / Nagad / SSLCommerz sandbox
+       └─ UptimeRobot health monitoring
 ```
-/apps/web        React 18 + Vite + TS + Tailwind + shadcn/ui + Framer Motion + TanStack Query + Router v6 + i18n + Leaflet + Recharts
-/apps/api        Node 20 + Express + TS + zod + helmet + cors + rate-limit + pino
-/supabase        migrations + seed (Postgres + RLS)
-/packages/shared zod schemas + types + constants
-/packages/config shared eslint/prettier/ts configs
-```
 
-## Quickstart
+- `apps/web`: React 18, Vite, TypeScript, Tailwind, Router, TanStack Query, i18next, Recharts.
+- `apps/api`: Node 20, Express, zod, Helmet, CORS allow-list, rate limits, Pino.
+- `supabase`: migrations, seed data, RLS, storage buckets, Realtime publication.
+- `packages/shared`: shared schemas, database types, booking rules.
+
+## Local setup
 
 ```bash
 pnpm install
 pnpm --filter @medinova/shared build
-pnpm dev # runs web + api in parallel
+cp apps/api/.env.example apps/api/.env
+pnpm dev
 ```
 
-- Web: http://localhost:5173
-- API: http://localhost:4000/health
+Web: `http://localhost:5173` · API health: `http://localhost:4000/health`
 
-## Env
+## Supabase
 
-Copy `.env.example` → `.env` in `apps/api` and `apps/web`. Never commit service-role keys.
+1. Create a project at supabase.com.
+2. Apply migrations in order, then run the seed SQL.
+3. Set Auth → URL Configuration: Site URL, redirect URLs for the deployed web origin, and `/auth/callback`.
+4. Create private buckets: `medical-records`, `prescriptions`; public bucket: `doctor-photos`.
+5. Configure SMTP through Resend or another provider for Auth email.
+6. Realtime is enabled by `supabase/migrations/0012_realtime.sql`.
 
-## Conventions
+## Deploy web (Vercel)
 
-- Strict TS, absolute imports `@/*`, zod env validation, i18n keys only (no hardcoded UI strings).
-- Conventional commits. RLS on every table.
+- Import the repository in Vercel.
+- Root Directory: `apps/web`
+- Framework preset: Vite
+- Build command: `pnpm --filter @medinova/web build`
+- Output directory: `dist`
+- Set `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+- `vercel.json` provides SPA fallback and immutable asset caching.
 
-## Test plan (foundation)
+## Deploy API (Render)
 
-1. `pnpm --filter @medinova/shared typecheck && build` passes.
-2. `pnpm --filter @medinova/api typecheck` passes; `GET /health` returns `{ ok: true }`.
-3. `pnpm --filter @medinova/web typecheck && build` passes; `/` renders without console errors in EN + BN, light + dark.
+- Create a Docker Web Service from the repository root.
+- Dockerfile: `apps/api/Dockerfile`
+- Docker context: repository root
+- Health check: `/health`
+- Configure every variable in `render.yaml`; never use the service-role key in the web app.
+- UptimeRobot should monitor `/health` every 14 minutes to reduce free-tier cold starts.
+
+## Production checklist
+
+- [ ] Rotate Supabase, JWT, Resend, gateway, and Turnstile keys.
+- [ ] Disable demo seed accounts and placeholders.
+- [ ] Replace sample doctors, fees, addresses, and photos with real data.
+- [ ] Test email, SMS, PDF slip, QR check-in, and each enabled payment sandbox.
+- [ ] Load-test booking and slot endpoints.
+- [ ] Restore the latest database backup into staging.
+- [ ] Configure analytics (Plausible/Umami) with consent.
+- [ ] Verify sitemap, robots, HTTPS, custom domain, and Google Business Profile per branch.
+
+## Verification
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm test:security
+pnpm check:sql
+pnpm build
+```

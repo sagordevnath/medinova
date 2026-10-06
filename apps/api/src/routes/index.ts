@@ -10,6 +10,9 @@ import { paymentsRouter } from './payments.js';
 import { aiRouter } from './ai.js';
 import { notifyRouter } from './notify.js';
 import { adminRouter } from './admin.js';
+import { platformRouter } from './platform.js';
+import { invoicesRouter } from './invoices.js';
+import { encountersRouter } from './encounters.js';
 
 /**
  * Build the versioned API router mounted at /api/v1 (and /v1 for the web
@@ -25,9 +28,13 @@ export function apiRouter(env: Env, logger: Logger): Router {
   r.use('/appointments', appointmentsRouter(env, logger));
   r.use('/prescriptions', prescriptionsRouter(env, logger));
   r.use('/payments', paymentsRouter(env, logger));
+  r.use('/invoices', invoicesRouter(env, logger));
+  r.use('/encounters', encountersRouter(env, logger));
   r.use('/ai', aiRouter(env, logger));
   r.use('/notify', notifyRouter(env, logger));
   r.use('/admin', adminRouter(env, logger));
+  // Cross-tenant platform admin (super_admin only): organizations + subscriptions.
+  r.use('/platform', platformRouter(env, logger));
 
   return r;
 }

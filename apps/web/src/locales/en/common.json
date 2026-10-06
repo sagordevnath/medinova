@@ -19,5 +19,22 @@
   "close": "Close",
   "viewAll": "View all",
   "offlineTitle": "You are offline",
-  "offlineBody": "Please check your connection. Bookings already made are safe."
+  "offlineBody": "Please check your connection. Bookings already made are safe.",
+  "profile": "Profile",
+  "footerForClinics": "Run your clinic on MediNova",
+  "footerForClinicsBody": "Your branding, your doctors, your patients — booking, billing and records in one place.",
+  "footerProduct": "For clinics",
+  "footerPatients": "For patients",
+  "footerCompany": "Company",
+  "footerSales": "Talk to sales",
+  "footerRights": "All rights reserved.",
+  "footerSecurity": "Tenant data isolated by row-level security",
+  "colPricing": "Pricing",
+  "colDemo": "Live demo",
+  "colFindDoctor": "Find a doctor",
+  "colDepartments": "Departments",
+  "colBranches": "Our branches",
+  "colBook": "Book appointment",
+  "colSignIn": "Staff sign in",
+  "colStartTrial": "Start free trial"
 }

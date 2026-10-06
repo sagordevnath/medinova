@@ -1,0 +1,124 @@
+{
+  "meta": "MediNova demo — see a full clinic day",
+  "badge": "Interactive sample",
+  "title": "See a full clinic day on MediNova",
+  "subtitle": "Five screens, from a patient booking online to an invoice paid. Everything below is sample data — no account needed.",
+  "sampleNotice": "Sample data. Nothing here is a real patient, doctor or payment.",
+  "tryIt": "Book a real appointment",
+  "startTrial": "Start 14-day trial",
+  "step": "Step",
+  "of": "of",
+  "next": "Next",
+  "prev": "Back",
+  "scenes": [
+    {
+      "id": "booking",
+      "name": "Patient books online",
+      "blurb": "A patient picks a department, sees real availability and confirms a slot in Bengali — no phone call needed.",
+      "highlights": [
+        "Live slot availability, never double-booked",
+        "Fee shown before confirming",
+        "Full Bengali and English"
+      ],
+      "points": [
+        { "label": "Department", "value": "Medicine" },
+        { "label": "Doctor", "value": "Dr. Ayesha Rahman" },
+        { "label": "Branch", "value": "Dhanmondi" },
+        { "label": "Date", "value": "Sun, 12 Oct" },
+        { "label": "Slot", "value": "10:20 – 10:40" },
+        { "label": "Fee", "value": "BDT 800" }
+      ],
+      "canned": "ফিভার এবং হার্ট রেট উচ্চ, মাথাব্যথা ৩ দিন ধরে।",
+      "status": "Confirmed",
+      "statusHint": "Confirmation sent by SMS and email"
+    },
+    {
+      "id": "reception",
+      "name": "Reception checks in",
+      "blurb": "Front desk sees today's queue, checks the patient in and prints a slip. No paper register.",
+      "highlights": [
+        "Today's queue in one screen",
+        "QR check-in from the patient's phone",
+        "Walk-ins supported alongside bookings"
+      ],
+      "points": [
+        { "label": "Queue #", "value": "7" },
+        { "label": "Waiting", "value": "3" },
+        { "label": "Checked in", "value": "10:02" },
+        { "label": "Est. wait", "value": "8 min" },
+        { "label": "Type", "value": "New patient" },
+        { "label": "Payment", "value": "Unpaid" }
+      ],
+      "status": "Checked in",
+      "statusHint": "Queue number displayed on the branch screen"
+    },
+    {
+      "id": "consultation",
+      "name": "Doctor records the visit",
+      "blurb": "A structured consultation: vitals, complaint, examination, ICD-10 diagnosis and plan — captured as a defensible record.",
+      "highlights": [
+        "SOAP note with vitals in one screen",
+        "ICD-10 coded for reporting",
+        "Saved as draft or completed"
+      ],
+      "points": [
+        { "label": "BP", "value": "138/86" },
+        { "label": "Pulse", "value": "88 bpm" },
+        { "label": "Temp", "value": "38.4 °C" },
+        { "label": "SpO₂", "value": "97%" },
+        { "label": "Weight", "value": "62 kg" },
+        { "label": "Code", "value": "J06.9" }
+      ],
+      "subjective": "Fever with body ache and headache for 3 days.",
+      "objective": "Throat congested, no chest findings. Cervical lymph nodes mildly tender.",
+      "plan": "Paracetamol 500 mg twice daily for 3 days. Plenty of fluids.",
+      "status": "Completed",
+      "statusHint": "Encounter closed and added to the patient record"
+    },
+    {
+      "id": "invoice",
+      "name": "Reception issues the bill",
+      "blurb": "Line items, a discount and a payment — with the total reconciled to the paisa, never rounded by hand.",
+      "highlights": [
+        "Prices snapshotted at issue time",
+        "Partial payments supported",
+        "Statement of account per patient"
+      ],
+      "points": [
+        { "label": "Consultation", "value": "BDT 800" },
+        { "label": "CBC test", "value": "BDT 1,200" },
+        { "label": "Discount", "value": "− BDT 200" },
+        { "label": "Paid (bKash)", "value": "BDT 1,500" },
+        { "label": "Balance", "value": "BDT 300" },
+        { "label": "Status", "value": "Part paid" }
+      ],
+      "status": "INV-DEMO-2026-00042",
+      "statusHint": "Changing a doctor's fee later never rewrites an issued invoice"
+    },
+    {
+      "id": "owner",
+      "name": "Owner checks the numbers",
+      "blurb": "Appointments, revenue and busy doctors across every branch — with no other clinic able to see a row of it.",
+      "highlights": [
+        "Every branch in one dashboard",
+        "Row-level tenant isolation",
+        "CSV export of any report"
+      ],
+      "points": [
+        { "label": "Appointments", "value": "412" },
+        { "label": "Revenue", "value": "BDT 3,28,000" },
+        { "label": "Doctors", "value": "12" },
+        { "label": "Branches", "value": "3" },
+        { "label": "No-show rate", "value": "4.1%" },
+        { "label": "Staff seats", "value": "14 / 15" }
+      ],
+      "status": "Isolated",
+      "statusHint": "A second clinic on the same deployment cannot read a single row of this data"
+    }
+  ],
+  "ctaTitle": "Ready to run your clinic on this?",
+  "ctaBody": "Every plan starts with a 14-day trial. We help you import your doctors, schedules and fees.",
+  "noCard": "No card required",
+  "setupTime": "Live in under a week",
+  "cancelAnytime": "Cancel anytime"
+}

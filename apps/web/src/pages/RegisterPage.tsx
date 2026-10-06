@@ -4,17 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { Button, GlassCard, GlassStrong } from '@/components/Button';
 import { Field, Input } from '@/components/fields';
 import { useAuth } from '@/hooks/useAuth';
+import { errorI18nKey } from '@/lib/errorKeys';
 import { useToast } from '@/providers/ToastProvider';
 import { ROLE_DASHBOARD } from '@medinova/shared';
 
 export function RegisterPage() {
-  const { t } = useTranslation(['auth', 'errors']);
+  const { t, i18n } = useTranslation(['auth', 'errors']);
   const { signUp, role, session } = useAuth();
   const { push } = useToast();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
@@ -38,10 +40,16 @@ export function RegisterPage() {
       return;
     }
     setBusy(true);
-    const res = await signUp({ email: email.trim(), password, fullName: fullName.trim() });
+    const res = await signUp({
+      email: email.trim(),
+      password,
+      fullName: fullName.trim(),
+      phone: phone.trim() || undefined,
+      preferredLang: i18n.resolvedLanguage === 'bn' ? 'bn' : 'en',
+    });
     setBusy(false);
     if (!res.ok) {
-      setFormError(t(res.errorKey ?? 'errors:authGeneric'));
+      setFormError(t(errorI18nKey(res.errorKey)));
       return;
     }
     if (res.needsEmailConfirm) {
@@ -97,6 +105,15 @@ export function RegisterPage() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+          />
+        </Field>
+        <Field label={`${t('auth:phone')} (${t('auth:optional', 'optional')})`}>
+          <Input
+            type="tel"
+            autoComplete="tel"
+            placeholder="+8801XXXXXXXXX"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
           />
         </Field>
         <Field label={t('auth:password')}>

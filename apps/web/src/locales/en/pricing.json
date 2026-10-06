@@ -1,0 +1,41 @@
+{
+  "meta": "MediNova for clinics — pricing and features",
+  "title": "Run your clinic on MediNova",
+  "subtitle": "Online booking, staff accounts, invoicing and a full patient record — in one place, under your own name and logo.",
+  "cta": "Start 14-day trial",
+  "ctaFeatured": "Start free trial",
+  "cancelAnytime": "Billed monthly, cancel anytime",
+  "noCard": "No card required",
+  "setupTime": "Live in under a week",
+  "ctaTitle": "Ready to move your clinic online?",
+  "ctaBody": "Every plan starts with a 14-day trial. We help you import your doctors, schedules and fees.",
+  "ctaSecondary": "Talk to sales",
+  "perMonth": "/month",
+  "perYear": "/year",
+  "billedYearly": "billed yearly",
+  "saveTwoMonths": "Save 2 months",
+  "mostPopular": "Most popular",
+  "unlimited": "Unlimited",
+  "includes": "Includes",
+  "branch": "Branches",
+  "doctors": "Doctors",
+  "seats": "Staff seats",
+  "appointments": "Appointments / month",
+  "faqTitle": "Common questions",
+  "trustTitle": "Built for real clinics",
+  "trust": [
+    { "title": "Your brand, not ours", "body": "Your name, logo and colours across the booking site, prescriptions and invoices." },
+    { "title": "Works in Bengali", "body": "Full English and Bengali support for patients and staff, including printed documents." },
+    { "title": "Money handled properly", "body": "Invoices, discounts, partial payments and statements — all in taka, no rounding surprises." },
+    { "title": "Records you can defend", "body": "Every consultation, vital sign and diagnosis is captured with who recorded it and when." },
+    { "title": "Separate clinics stay separate", "body": "Row-level security means one clinic can never read another clinic's patients." },
+    { "title": "No lock-in", "body": "Export every record at any time. Your patients' data is yours, not our leverage." }
+  ],
+  "faqs": [
+    { "q": "Can I use my own name and logo?", "a": "Yes. Your name, logo and colours appear on the booking site and every patient document." },
+    { "q": "Do you charge per patient or per appointment?", "a": "No. The monthly fee covers your whole clinic. Patients never see a subscription charge." },
+    { "q": "Can you migrate our existing doctors and fees?", "a": "Yes. We import your doctor list, schedules and fee structure during onboarding." },
+    { "q": "What happens to our data if we cancel?", "a": "You keep read and export access, and can download every record whenever you need it." },
+    { "q": "Is patient data secure?", "a": "Every table is protected by row-level security, so staff only ever see their own clinic's patients." }
+  ]
+}

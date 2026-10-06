@@ -13,6 +13,10 @@ export const ROLES = [
   'doctor',
   'receptionist',
   'branch_admin',
+  // Owner/admin of one subscribing clinic. Full control of their own
+  // organisation (doctors, branches, schedules, fees) but never the platform
+  // subscription dashboard — that is super_admin only.
+  'org_admin',
   'super_admin',
 ] as const;
 export type Role = (typeof ROLES)[number];
@@ -42,6 +46,9 @@ export const ROLE_DASHBOARD: Record<Role, string> = {
   doctor: '/doctor',
   receptionist: '/reception',
   branch_admin: '/branch-admin',
-  super_admin: '/admin',
+  // A clinic's own admin gets the management console (doctors, branches,
+  // schedules, fees) but never the platform subscription dashboard.
+  org_admin: '/manage',
+  super_admin: '/platform',
 };
 
